@@ -103,13 +103,7 @@
 <div id="results">
     <!-- Здесь будут появляться вакансии -->
 </div>
-<div id="skills_diagram">
-    {% if image %}
-        <img src="data:image/png;base64,{{ image }}" alt="Диаграмма">
-    {% else %}
-        <p>Диаграмма не может быть построена</p>
-    {% endif %}
-</div>
+
  <script>
         document.getElementById('search-button').addEventListener('click', function () {
             // Добавляем класс clicked при нажатии

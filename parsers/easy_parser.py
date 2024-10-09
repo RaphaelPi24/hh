@@ -1,5 +1,10 @@
+from dataclasses import dataclass
+
+import aiohttp
 import requests
-from dataclasses import dataclass, field
+from peewee import OperationalError, IntegrityError
+
+from models import VacancyCard
 
 url = 'https://api.hh.ru/vacancies'
 head = {'Accept': '*/*',
@@ -8,7 +13,7 @@ head = {'Accept': '*/*',
 
 @dataclass
 class WorkCart:
-    number: int
+    vacancy_id: int
     name: str
     salary_from: int | None
     salary_to: int | None
@@ -24,11 +29,7 @@ class WorkCart:
     average_salary: int = None
 
 
-    def get(self, key, default=None):
-        return getattr(self, key, default)
-
-
-def get_data(profession):
+async def get_data(profession) -> list[WorkCart]:
     params = {
         'clusters': 'true',
         'only_with_salary': 'true',
@@ -38,12 +39,14 @@ def get_data(profession):
         'search_field': 'name',
         'per_page': 100,
     }
-    data_json = requests.get(url, headers=head, params=params, timeout=5).json()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=head, params=params, timeout=5) as response:
+            data_json = await response.json()  # Асинхронное получение JSON
 
     jobs = []
     for i, value in enumerate(data_json['items'], 1):
         cart = WorkCart(
-            number=i,
+            vacancy_id=value['id'],
             name=value['name'],
             salary_from=value['salary']['from'],
             salary_to=value['salary']['to'],
@@ -53,67 +56,80 @@ def get_data(profession):
             schedule=value['schedule']['name'],
             experience=value['experience']['name'],
             employment=value['employment']['name'],
-            api_url=value['alternate_url'],
-            url=value['url'],
+            api_url=value['url'],
+            url=value['alternate_url'],
         )
         jobs.append(cart)
     return jobs
 
 
-def get_keyskills(data: list):
+def get_keyskills(data: list[WorkCart]) -> list[WorkCart]:
     for cart in data:
-        url = cart.get('api_url')
+        url = cart.api_url
         if url:
             query_keyskills = requests.get(url, headers=head, timeout=5).json()
         keyskills = query_keyskills.get('key_skills')
-        cart.skills = [skills_dict.get('name') for skills_dict in keyskills]
+        skills_list = [skills_dict.get('name') for skills_dict in keyskills]
+        cart.skills = ','.join(skills_list)
     return data
 
-def get_key_skills_salary(data: list):
-    keyskills = {}
+async def get_keyskills1(data: list[WorkCart]) -> list[WorkCart]:
     for cart in data:
-        for skill in cart.skills:
-            if skill in keyskills:
-                keyskills[skill]['count'] += 1
-                if cart.get('average_salary') is not None:
-                    # Убедись, что список зарплат существует, затем добавь зарплату
-                    if 'salary' in keyskills[skill]:
-                        keyskills[skill]['salary'].append(cart['average_salary'])
-                    else:
-                        keyskills[skill]['salary'] = [cart['average_salary']]
-            else:
-                keyskills[skill] = {}
-                keyskills[skill]['count'] = 1
-                if cart.get('average_salary') is not None:
-                    keyskills[skill]['salary'] = [cart['average_salary']]
-                else:
-                    keyskills[skill]['salary'] = []
-    for key in keyskills:
-        if len(keyskills[key]['salary']) > 0:
-            keyskills[key]['salary'] = sum(keyskills[key]['salary']) // len(keyskills[key]['salary'])
-    return keyskills
+        url = cart.api_url
+        if url:
+            # async with aiohttp.ClientSession() as session:
+            #     async with session.get(url) as response:
+            #         ...
+            query_keyskills = requests.get(url, headers=head, timeout=5).json()
+        keyskills = query_keyskills.get('key_skills')
+        skills_list = [skills_dict.get('name') for skills_dict in keyskills]
+        cart.skills = ','.join(skills_list)
+    return data
 
 
-def get_average_salary(carts):
+def get_average_salary(carts: list[WorkCart]) -> list[WorkCart]:
     for cart in carts:
-        if all([
-            cart.get('salary_from') is not None,
-            cart.get('salary_to') is not None,
-            cart.get('currency') == 'RUR'
-        ]):
-            cart.average_salary = (cart.get('salary_from') + cart.get('salary_to')) // 2
+        if (
+            cart.salary_from is not None
+            and cart.salary_to is not None
+            and cart.currency == 'RUR'
+        ):
+            cart.average_salary = (cart.salary_from + cart.salary_to) // 2
     return carts
 
-# cart = WorkCart
-#         cart['number'] = i
-#         cart['name'] = value['name']
-#         cart['salary_from'] = value['salary']['from']
-#         cart['salary_to'] = value['salary']['to']
-#         cart['area'] = value['area']['name']
-#         cart['currency'] = value['salary']['currency']
-#         cart['employer'] = value['employer']['name']
-#         cart['schedule'] = value['schedule']['name']
-#         cart['experience'] = value['experience']['name']
-#         cart['employment'] = value['employment']['name']
-#         cart['api_url'] = value['alternate_url']
-#         cart['url'] = value['url']
+
+def to_bd(data: list[WorkCart]) -> None:
+    try:
+        VacancyCard.create_table()
+    except OperationalError:
+        print("Таблица VacancyCard уже существует.")
+    for cart in data:
+        try:
+            print(cart)
+            # Используем get_or_create для предотвращения дублирования по cart_id
+            vacancy_card, created = VacancyCard.get_or_create(
+                vacancy_id=cart.vacancy_id,  # Проверяем уникальный ID вакансии
+                defaults={
+                    'name': cart.name,
+                    'salary_from': cart.salary_from,
+                    'salary_to': cart.salary_to,
+                    'area': cart.area,
+                    'currency': cart.currency,
+                    'employer': cart.employer,
+                    'schedule': cart.schedule,
+                    'experience': cart.experience,
+                    'employment': cart.employment,
+                    'api_url': cart.api_url,
+                    'url': cart.url,
+                    'skills': cart.skills,
+                    'average_salary': cart.average_salary
+                }
+            )
+
+            if created:
+                print(f"Vacancy {cart.name} added successfully.".encode('utf-8', errors='ignore'))
+
+            else:
+                print(f"Vacancy {cart.name} already exists.".encode('utf-8', errors='ignore'))
+        except IntegrityError as e:
+            print(f"Error saving vacancy: {e}".encode('utf-8', errors='ignore'))

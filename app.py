@@ -1,7 +1,12 @@
-from flask import Flask, render_template, request, url_for, redirect
+import asyncio
 
-from parsers.easy_parser import get_data, get_key_skills_salary, get_average_salary
-from analytics.diagrams import create_diagramm_skills_salary
+from flask import Flask, render_template, request, url_for, redirect
+from peewee import IntegrityError, OperationalError
+
+from models import VacancyCard
+from parsers.easy_parser import get_data, get_average_salary, get_keyskills, to_bd
+from analytics.data_for_diagram import get_popular_skills
+from analytics.diagrams import create_diagramm_skills_salary, PopularSkillDiagramBuilder, send
 
 app = Flask(__name__)
 
@@ -22,36 +27,25 @@ def post_base():
     return redirect(url_for('get_show', query=search_query))
 
 
+
 @app.route('/show', methods=['GET', 'POST'])
 def get_show():
     search_query = request.args.get('query')
 
-    json = get_data(search_query)
-    #json = main(search_query)
-    json = get_average_salary(json)
-    statistic_skills = get_key_skills_salary(json)
+    vacancy_data = asyncio.run(get_data(search_query))
+    print('Первичные данные собраны')
+    vacancy_data_have_average_salary = get_average_salary(vacancy_data)
+    print('Собраные данные вакансий со средними зарплатами')
+    full_vacancy_data = get_keyskills(vacancy_data_have_average_salary)
+    print('Собраны полные данные')
+    to_bd(full_vacancy_data)
+    data_for_diagram = get_popular_skills()
+    #print(full_vacancy_data)
+    diagram = PopularSkillDiagramBuilder()
+    image = send(diagram, data_for_diagram)
 
-    # statistic_skills = q
-    # json = ''
-    print(statistic_skills)
-
-    #image = create_diagram_popular_skills(statistic_skills)
-
-    if statistic_skills:
-
-        print("Диаграмма сгенерирована")
-    else:
-        image = None
-        print("Нет данных для диаграммы")
-
-    if statistic_skills:
-        image2 = create_diagramm_skills_salary(statistic_skills)
-        print("Диаграмма2 сгенерирована")
-    else:
-        image2 = None
-        print("Нет данных для диаграммы2")
-
-    return render_template('views/vacancy_list.html', search_query=search_query, jobs=json, image2=image2)
+    #jobs=vacancy_data_have_average_salary,
+    return render_template('views/vacancy_list.html', search_query=search_query,  image=image)
 
 if __name__ == '__main__':
     app.run()
