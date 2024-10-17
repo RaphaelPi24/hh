@@ -77,25 +77,25 @@ def get_show():
     return render_template('views/vacancy_list.html', jobs=data_vacancies, image=image, time=execution_time)
 
 
-# @app.route('search_by_skills', methods=['POST'])
-# def search_by_skills():
-#     search_query = request.form['input_skill']
-#     data_vacancies = (
-#         VacancyCard
-#         .select(
-#             VacancyCard.name,
-#             VacancyCard.employer,
-#             VacancyCard.salary_from,
-#             VacancyCard.salary_to,
-#             VacancyCard.currency,
-#             VacancyCard.experience,
-#             VacancyCard.employment,
-#             VacancyCard.schedule
-#         )
-#         .where(VacancyCard.skills.contains(search_query))
-#         .dicts()
-#     )
-#     return render_template('views/vacancy_list.html', jobs=data_vacancies)
+@app.route('/search_by_skills', methods=['POST'])
+def search_by_skills():
+    search_query = request.form['skill-input']
+    data_vacancies = (
+        VacancyCard
+        .select(
+            VacancyCard.name,
+            VacancyCard.employer,
+            VacancyCard.salary_from,
+            VacancyCard.salary_to,
+            VacancyCard.currency,
+            VacancyCard.experience,
+            VacancyCard.employment,
+            VacancyCard.schedule
+        )
+        .where(VacancyCard.skills.contains(search_query))
+        .dicts()
+    )
+    return render_template('views/vacancy_list.html', jobs=data_vacancies)
 
 
 if __name__ == '__main__':

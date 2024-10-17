@@ -106,6 +106,15 @@
     <!-- Здесь будут появляться вакансии -->
 </div>
 
+<form id="search-form-skill" hx-post="{{ url_for('search_by_skills') }}" hx-target="#results_skill" hx-swap="innerHTML">
+    <label for="search">Enter job title:</label>
+    <input type="text" id="search_skill" name="skill-input" placeholder="Не спорить с руководителем" required>
+    <button type="submit" id="search-button">Search</button>
+</form>
+<div id="results_skill">
+    <!-- Здесь будут появляться вакансии -->
+</div>
+
  <script>
         document.getElementById('search-button').addEventListener('click', function () {
             // Добавляем класс clicked при нажатии
