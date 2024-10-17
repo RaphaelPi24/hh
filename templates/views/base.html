@@ -85,17 +85,19 @@
     </style>
 </head>
 <body>
-<!--
+
+
 <div class="container">
-    <h2>Enter Some Text</h2>
-    <form action="{{ url_for('post_base') }}" method="POST">
-        <label for="user-input">Your Text:</label>
-        <input type="text" id="user-input" name="user-input" placeholder="Type something...">
-        <button type="submit">Submit</button>
+    <h2>Для сбора данных с hh в БД. Запуск асинхронного парсера по API. Запись данных в БД.</h2>
+    <form action="{{ url_for('collect_vacancies') }}" method="POST">
+        <label for="user-input">Какую профессию ищем?</label>
+        <input type="text" id="input_prof" name="input_prof_name" placeholder="Например, программист">
+        <button type="submit">Сбор</button>
+        <h3>{{ text }}</h3>
     </form>
 </div>
--->
-<form id="search-form" hx-post="{{ url_for('post_base') }}" hx-target="#results" hx-swap="innerHTML">
+
+<form id="search-form" hx-post="{{ url_for('get_show') }}" hx-target="#results" hx-swap="innerHTML">
     <label for="search">Enter job title:</label>
     <input type="text" id="search" name="user-input" placeholder="Job title..." required>
     <button type="submit" id="search-button">Search</button>

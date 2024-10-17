@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 
 import aiohttp
@@ -29,6 +30,10 @@ class WorkCart:
     average_salary: int = None
 
 
+def clean_decoding(string):
+    return string.encode('cp1251', errors='ignore').decode('cp1251')
+
+
 async def get_data(profession) -> list[WorkCart]:
     params = {
         'clusters': 'true',
@@ -47,7 +52,7 @@ async def get_data(profession) -> list[WorkCart]:
     for i, value in enumerate(data_json['items'], 1):
         cart = WorkCart(
             vacancy_id=value['id'],
-            name=value['name'],
+            name=clean_decoding(value['name']),
             salary_from=value['salary']['from'],
             salary_to=value['salary']['to'],
             area=value['area']['name'],
@@ -73,19 +78,26 @@ def get_keyskills(data: list[WorkCart]) -> list[WorkCart]:
         cart.skills = ','.join(skills_list)
     return data
 
-async def get_keyskills1(data: list[WorkCart]) -> list[WorkCart]:
-    for cart in data:
-        url = cart.api_url
-        if url:
-            # async with aiohttp.ClientSession() as session:
-            #     async with session.get(url) as response:
-            #         ...
-            query_keyskills = requests.get(url, headers=head, timeout=5).json()
-        keyskills = query_keyskills.get('key_skills')
-        skills_list = [skills_dict.get('name') for skills_dict in keyskills]
-        cart.skills = ','.join(skills_list)
-    return data
 
+async def get_keyskills1(data: list[WorkCart]) -> tuple[WorkCart]:
+    # Используем asyncio.gather для асинхронного вызова get_skills_from_1_cart для каждого элемента
+    tasks = [get_skills_from_1_cart(cart) for cart in data]
+
+    # Ожидаем завершения всех задач
+    data_with_skills = await asyncio.gather(*tasks)
+
+    return data_with_skills
+
+
+async def get_skills_from_1_cart(cart: WorkCart) -> WorkCart:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(cart.api_url) as response:
+            query_skills = await response.json()
+            skills = query_skills.get('key_skills')
+            if skills is not None:
+                skills_list = [skills_dict.get('name') for skills_dict in skills]
+                cart.skills = ','.join(skills_list)
+    return cart
 
 def get_average_salary(carts: list[WorkCart]) -> list[WorkCart]:
     for cart in carts:
@@ -98,12 +110,13 @@ def get_average_salary(carts: list[WorkCart]) -> list[WorkCart]:
     return carts
 
 
-def to_bd(data: list[WorkCart]) -> None:
+def to_bd(data: tuple[WorkCart]) -> None:
     try:
         VacancyCard.create_table()
     except OperationalError:
         print("Таблица VacancyCard уже существует.")
     for cart in data:
+        cart
         try:
             print(cart)
             # Используем get_or_create для предотвращения дублирования по cart_id
@@ -127,9 +140,8 @@ def to_bd(data: list[WorkCart]) -> None:
             )
 
             if created:
-                print(f"Vacancy {cart.name} added successfully.".encode('utf-8', errors='ignore'))
-
+                print(f"Vacancy {cart.name} added successfully.")
             else:
-                print(f"Vacancy {cart.name} already exists.".encode('utf-8', errors='ignore'))
+                print(f"Vacancy {cart.name} already exists.")
         except IntegrityError as e:
-            print(f"Error saving vacancy: {e}".encode('utf-8', errors='ignore'))
+            print(f"Error saving vacancy: {e}")

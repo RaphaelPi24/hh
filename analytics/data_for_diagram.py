@@ -10,14 +10,15 @@ def get_popular_skills():
     popular_skills = {}
     for cart in data:
         text = cart['skills']
-        skills_list = [skill.strip() for skill in text.split(',') if len(skill) > 0]
-        for skill in skills_list:
-            if len(skill) > 0:
-                if skill in popular_skills:
-                    popular_skills[skill] += 1
-                else:
-                    popular_skills[skill] = {}
-                    popular_skills[skill] = 1
+        if text:
+            skills_list = [skill.strip() for skill in text.split(',') if len(skill) > 0]
+            for skill in skills_list:
+                if len(skill) > 0:
+                    if skill in popular_skills:
+                        popular_skills[skill] += 1
+                    else:
+                        popular_skills[skill] = {}
+                        popular_skills[skill] = 1
     return popular_skills
 
 
