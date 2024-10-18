@@ -1,125 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/htmx.org@1.9.3"></script>
-    <title>Text Input Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }
-
-        .container {
-            max-width: 400px;
-            margin: auto;
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        button {
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin: 20px 0;
-            max-width: 600px;
-        }
-
-        .card h3 {
-            margin: 0;
-            color: #333;
-        }
-
-        .card .company {
-            color: #007BFF;
-            font-weight: bold;
-        }
-
-        .card .location, .card .salary {
-            color: #666;
-            margin-top: 10px;
-        }
-         button {
-            background-color: #007BFF; /* Синий по умолчанию */
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        button.clicked {
-            background-color: #28a745; /* Зеленый после нажатия */
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <title>hh-ashechka</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <!-- Шапка -->
+    <header>
+        <nav>
+            <ul class="menu">
+                <li><a href="#vacancies">Вакансии</a></li>
+                <li><a href="#analytics">Аналитика</a></li>
+                <li><a href="#admin">Админ</a></li>
+            </ul>
+        </nav>
+    </header>
 
+    <!-- Основное содержимое -->
+    <main>
+        <section id="vacancies">
+            <h1>Вакансии</h1>
+            <p>Поиск и фильтрация вакансий: Пользователи могут искать вакансии по ключевым словам, фильтровать по зарплате, местоположению, удаленной работе и навыкам.</p>
+        </section>
 
-<div class="container">
-    <h2>Для сбора данных с hh в БД. Запуск асинхронного парсера по API. Запись данных в БД.</h2>
-    <form action="{{ url_for('collect_vacancies') }}" method="POST">
-        <label for="user-input">Какую профессию ищем?</label>
-        <input type="text" id="input_prof" name="input_prof_name" placeholder="Например, программист">
-        <button type="submit">Сбор</button>
-        <h3>{{ text }}</h3>
-    </form>
-</div>
+        <section id="analytics">
+            <h1>Аналитика</h1>
+            <p>Аналитика и статистика: Визуализация данных по зарплатам, популярным навыкам и компаниям.</p>
+        </section>
 
-<form id="search-form" hx-post="{{ url_for('get_show') }}" hx-target="#results" hx-swap="innerHTML">
-    <label for="search">Enter job title:</label>
-    <input type="text" id="search" name="user-input" placeholder="Job title..." required>
-    <button type="submit" id="search-button">Search</button>
-</form>
-<div id="results">
-    <!-- Здесь будут появляться вакансии -->
-</div>
-
-<form id="search-form-skill" hx-post="{{ url_for('search_by_skills') }}" hx-target="#results_skill" hx-swap="innerHTML">
-    <label for="search">Enter job title:</label>
-    <input type="text" id="search_skill" name="skill-input" placeholder="Не спорить с руководителем" required>
-    <button type="submit" id="search-button">Search</button>
-</form>
-<div id="results_skill">
-    <!-- Здесь будут появляться вакансии -->
-</div>
-
- <script>
-        document.getElementById('search-button').addEventListener('click', function () {
-            // Добавляем класс clicked при нажатии
-            this.classList.add('clicked');
-        });
-    </script>
+        <section id="admin">
+            <h1>Админ</h1>
+            <p>Настройка сбора информации с HH</p>
+        </section>
+    </main>
 </body>
 </html>
+
