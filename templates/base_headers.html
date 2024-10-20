@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hh-ashechka</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Шапка -->
+    <header>
+        <nav>
+            <ul class="menu">
+                <li><a href="{{ url_for('get_page_vacancies') }}">Вакансии</a></li>
+                <li><a href="{{ url_for('get_analytics') }}">Аналитика</a></li>
+                <li><a href="{{ url_for('get_admin') }}">Админ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Основное содержимое -->
+    <main>
+        {% block content %}
+
+        {% endblock %}
+    </main>
+</body>
+</html>
+

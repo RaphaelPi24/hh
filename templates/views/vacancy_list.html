@@ -13,18 +13,3 @@
 {% else %}
     <p>Вакансий не найдено по Вашему запросу</p>
 {% endif %}
-<div id="skills_diagram">
-    {% if image %}
-        <img src="data:image/png;base64,{{ image }}" alt="Диаграмма">
-    {% else %}
-        <p>Диаграмма не может быть построена</p>
-    {% endif %}
-</div>
-
-<div id="skills_salary_diagram">
-    {% if image2 %}
-        <img src="data:image/png;base64,{{ image2 }}" alt="Диаграмма">
-    {% else %}
-        <p>Диаграмма2 не может быть построена</p>
-    {% endif %}
-</div>

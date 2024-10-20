@@ -1,0 +1,51 @@
+{% extends 'base_headers.html' %}
+{% block content %}
+	<main class="content">
+        <!-- Фильтр поиска работы -->
+        <aside class="filter">
+            <h2>Фильтр вакансий</h2>
+            <form action="{{ url_for('get_show') }}" method="POST">
+                <div class="form-group">
+                    <label for="search-type">Поиск по:</label>
+                    <select id="search-type" name="search-type">
+                        <option value="title">Название</option>
+                        <option value="skill">Навык</option>
+                    </select>
+                    <input type="text" id="main_search" name="main_query" placeholder="Программист">
+                </div>
+
+                <div class="form-group">
+                    <label for="salary-from">Зарплата от:</label>
+                    <input type="number" id="salary-from" name="salary_from" placeholder="₽">
+                </div>
+
+                <div class="form-group">
+                    <label for="salary-to">Зарплата до:</label>
+                    <input type="number" id="salary-to" name="salary_to" placeholder="₽">
+                </div>
+
+                <div class="form-group">
+                    <label for="city">Город:</label>
+                    <input type="text" id="city" name="city" placeholder="Например, Москва">
+                </div>
+
+                <div class="form-group">
+                    <label for="company">Компания:</label>
+                    <input type="text" id="company" name="company" placeholder="Название компании">
+                </div>
+
+                <div class="form-group">
+                    <label for="remote">Удаленная работа:</label>
+                    <input type="checkbox" id="remote" name="remote">
+                </div>
+
+               <button class="button is-light">Искать</button>
+            </form>
+        </aside>
+
+        <!-- Размещение вакансий -->
+        <section class="vacancies">
+            <h2>Список вакансий</h2>
+            <p>Здесь будут размещены вакансии...</p>
+        </section>
+{% endblock %}

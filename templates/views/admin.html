@@ -1,0 +1,14 @@
+{% extends 'base_headers.html' %}
+{% block content %}
+
+<div class="container">
+    <h2>Для сбора данных с hh в БД. Запуск асинхронного парсера по API. Запись данных в БД.</h2>
+    <form action="{{ url_for('collect_vacancies') }}" method="POST">
+        <label for="user-input">Какую профессию ищем?</label>
+        <input type="text" id="input_prof" name="input_prof_name" placeholder="Например, программист">
+        <button type="submit">Сбор</button>
+        <h3>{{ text }}</h3>
+    </form>
+</div>
+
+{% endblock %}
