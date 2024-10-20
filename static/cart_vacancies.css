@@ -1,0 +1,72 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+h4 {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.card {
+    background-color: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+h3 {
+    font-size: 20px;
+    margin: 0 0 10px;
+    color: #007bff;
+}
+
+.company, .salary, div {
+    margin-bottom: 10px;
+}
+
+.company {
+    font-weight: bold;
+    color: #333;
+}
+
+.salary {
+    font-weight: bold;
+    color: #28a745;
+}
+
+div {
+    font-size: 14px;
+    color: #555;
+}
+
+p {
+    font-size: 16px;
+    color: #666;
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}

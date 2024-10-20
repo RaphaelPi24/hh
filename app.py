@@ -38,66 +38,90 @@ def collect_vacancies():
 # Поиск и отображение диаграммы с помощью HTMX
 @app.route('/show_vacancies', methods=['POST'])
 def get_show():
+    select = request.form.get('search-type')
+    full_search_query = request.form.get('main_query')
+    salary_from = request.form.get('salary_from') or None
+    salary_to = request.form.get('salary_to') or None
+    city = request.form.get('city') or None
+    company = request.form.get('company') or None
+    remote = request.form.get('remote') or None # on - если отмечен.  None
 
-    full_search_query = request.form['main_query']
-    salary_from = request.form['salary_from']
-    salary_to = request.form['salary_to']
-    city = request.form['city']
-    company = request.form['company']
-    remote = request.form.get('remote') # on - если отмечен.  None
-    search_queries_from_words = full_search_query.split()
-    data_for_diagram = get_popular_skills()
 
-    diagram = PopularSkillDiagramBuilder()
-    image = send(diagram, data_for_diagram)
+
+    #data_for_diagram = get_popular_skills()
+    #diagram = PopularSkillDiagramBuilder()
+    #image = send(diagram, data_for_diagram)
 
     start = time.time()
     redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-    cache_key = full_search_query
+    cache_key = full_search_query + str(salary_from) + str(salary_to) + str(city) + str(company) + str(remote)
     cache_data = redis_client.get(cache_key)
+
     if cache_data:
         data_vacancies = json.loads(cache_data)
     else:
-        conditions = [VacancyCard.name.contains(query) for query in search_queries_from_words]
+        if select == 'title':
+            search_queries_from_words = full_search_query.split()
+            conditions = [VacancyCard.name.contains(query) for query in search_queries_from_words]
 
-        # Добавляем фильтр по зарплате (если значения указаны)
-        if salary_from:
-            conditions.append(VacancyCard.salary_from >= int(salary_from))
-        if salary_to:
-            conditions.append(VacancyCard.salary_to <= int(salary_to))
+            # Добавляем фильтр по зарплате (если значения указаны)
+            if salary_from:
+                conditions.append(VacancyCard.salary_from >= int(salary_from))
+            if salary_to:
+                conditions.append(VacancyCard.salary_to <= int(salary_to))
 
-        # Добавляем фильтр по городу (если указан)
-        if city:
-            conditions.append(VacancyCard.area == city)
+            # Добавляем фильтр по городу (если указан)
+            if city:
+                conditions.append(VacancyCard.area == city)
 
-        # Добавляем фильтр по компании (если указана)
-        if company:
-            conditions.append(VacancyCard.employer.contains(company))
+            # Добавляем фильтр по компании (если указана)
+            if company:
+                conditions.append(VacancyCard.employer.contains(company))
 
-        # Добавляем фильтр по удаленной работе (если включен чекбокс)
-        if remote == 'on':
-            conditions.append(VacancyCard.schedule.contains('Remote'))
+            # Добавляем фильтр по удаленной работе (если включен чекбокс)
+            if remote == 'on':
+                conditions.append(VacancyCard.schedule.contains('Remote'))
 
-        # Объединяем все условия с AND (если нужно OR - используйте reduce(operator.or_, conditions))
-        data_vacancies = list(
-            VacancyCard
-            .select(
-                VacancyCard.name,
-                VacancyCard.employer,
-                VacancyCard.salary_from,
-                VacancyCard.salary_to,
-                VacancyCard.currency,
-                VacancyCard.experience,
-                VacancyCard.employment,
-                VacancyCard.schedule
+            # Объединяем все условия с AND (если нужно OR - используйте reduce(operator.or_, conditions))
+            data_vacancies = list(
+                VacancyCard
+                .select(
+                    VacancyCard.name,
+                    VacancyCard.employer,
+                    VacancyCard.salary_from,
+                    VacancyCard.salary_to,
+                    VacancyCard.currency,
+                    VacancyCard.experience,
+                    VacancyCard.employment,
+                    VacancyCard.schedule,
+                    VacancyCard.url
+                )
+                .where(*conditions)  # Применяем все условия
+                .dicts()
             )
-            .where(*conditions)  # Применяем все условия
-            .dicts()
-        )
+
+        elif select == 'skill':
+            data_vacancies = (
+                VacancyCard
+                .select(
+                    VacancyCard.name,
+                    VacancyCard.employer,
+                    VacancyCard.salary_from,
+                    VacancyCard.salary_to,
+                    VacancyCard.currency,
+                    VacancyCard.experience,
+                    VacancyCard.employment,
+                    VacancyCard.schedule,
+                    VacancyCard.url
+                )
+                .where(VacancyCard.skills.contains(full_search_query))
+                .dicts()
+            )
+
         redis_client.setex(cache_key, 60, json.dumps(list(data_vacancies)))
     end = time.time()
     execution_time = end - start
-    return render_template('views/vacancy_list.html', jobs=data_vacancies, time=execution_time)
+    return render_template('views/vacancies_cards.html', jobs=enumerate(data_vacancies, 1), time=execution_time)
 
 
 @app.route('/search_by_skills', methods=['POST'])
@@ -113,17 +137,18 @@ def search_by_skills():
             VacancyCard.currency,
             VacancyCard.experience,
             VacancyCard.employment,
-            VacancyCard.schedule
+            VacancyCard.schedule,
+            VacancyCard.url
         )
         .where(VacancyCard.skills.contains(search_query))
         .dicts()
     )
-    return render_template('views/vacancy_list.html', jobs=data_vacancies)
+    return render_template('views/vacancies_cards.html', jobs=data_vacancies)
 
 
 @app.route('/vacancies', methods=['GET'])
 def get_page_vacancies():
-    return render_template('views/vacancies.html')
+    return render_template('views/filter_vacancies.html')
 
 
 @app.route('/admin', methods=['GET'])

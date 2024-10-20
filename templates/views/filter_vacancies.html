@@ -1,10 +1,13 @@
 {% extends 'base_headers.html' %}
+
 {% block content %}
+
 	<main class="content">
         <!-- Фильтр поиска работы -->
         <aside class="filter">
             <h2>Фильтр вакансий</h2>
-            <form action="{{ url_for('get_show') }}" method="POST">
+
+            <form hx-post="{{ url_for('get_show') }}" hx-target="#list_vacancies" hx-swap="innerHTML">
                 <div class="form-group">
                     <label for="search-type">Поиск по:</label>
                     <select id="search-type" name="search-type">
@@ -43,8 +46,9 @@
             </form>
         </aside>
 
+
         <!-- Размещение вакансий -->
-        <section class="vacancies">
+        <section class="vacancies" id="list_vacancies">
             <h2>Список вакансий</h2>
             <p>Здесь будут размещены вакансии...</p>
         </section>
