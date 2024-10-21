@@ -1,6 +1,7 @@
 import asyncio
 import json
 import operator
+import os
 import time
 from functools import reduce
 
@@ -160,6 +161,19 @@ def get_admin():
 def get_analytics():
     return render_template('views/diagram.html')
 
+
+def check_images():
+    while True:
+        print("Проверка изображений...")
+        # Ваш код для проверки наличия изображений
+        path = "путь/к/вашим/изображениям"
+        files = os.listdir(path)
+        for file in files:
+            if file.endswith(".png") or file.endswith(".jpg"):
+                print(f"Изображение найдено: {file}")
+
+        # Задержка в 5 минут
+        time.sleep(300)  # 300 секунд = 5 минут
 
 if __name__ == '__main__':
     app.run()

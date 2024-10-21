@@ -83,19 +83,6 @@ main {
     border-radius: 4px;
 }
 
-button[type="submit"] {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button[type="submit"]:hover {
-    background-color: #0056b3;
-}
 
 /* Раздел вакансий (правая часть) */
 .vacancies {
@@ -131,7 +118,7 @@ button[type="submit"]:hover {
 }
 
 .button:hover {
-  border-color: rgba(71, 71, 71, 0.7);
+  border-color: rgb(71, 71, 71);
 }
 
 .button:active {
