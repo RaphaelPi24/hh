@@ -1,81 +1,17 @@
 {% extends 'base_headers.html' %}
 {% block content %}
 
-    <style>
-
-        .container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1500px;
-            margin-bottom: 40px;
-
-        }
-
-        .form-container {
-
-            background-color: #f4f4f4;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 40%; /* Ширина каждой формы */
-        }
-
-        .third-container {
-
-            background-color: #f4f4f4;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 800px; /* Ширина третьей формы */
-            margin-top: 40px;
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        input[type="text"], input[type="number"], textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background-color: #333;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #555;
-        }
-    </style>
-
-
     <!-- Две формы в горизонтальном расположении -->
     <div class="container">
         <!-- Первая форма для ручного сбора данных -->
         <div class="form-container">
             <h2>Ручной сбор данных</h2>
-            <form action="{{ url_for('collect_vacancies') }}" method="POST">
+            <form action="{{ url_for('manual_collect_vacancies') }}" method="POST">
                 <label for="profession">Какую профессию ищем?</label>
                 <input type="text" id="profession" name="input_prof_name" placeholder="Введите профессию">
                 <button type="submit" class="button is-light">Собрать</button>
-                {% if text %}
-                <p>{{ text }}</p>
+                {% if message_manual_collect_vacancies %}
+                    <p>{{ message_manual_collect_vacancies }}</p>
                 {% endif %}
             </form>
         </div>
@@ -83,7 +19,7 @@
         <!-- Вторая форма для автоматического сбора данных -->
         <div class="form-container">
             <h2>Автоматический сбор данных</h2>
-            <form id="collect-form" method="POST">
+            <form action="{{ url_for('collect_vacancies') }}" id="collect-form" method="POST">
                 <label for="professions">Какие профессии ищем?</label>
                 <textarea id="professions" name="auto_collect_vacancies"
                           placeholder="Введите профессии через запятую"></textarea>
@@ -96,11 +32,11 @@
 
                 <!-- Кнопка для остановки для первого действия -->
                 <button class="button is-light" type="submit" onclick="setFormAction('stop_main')">Остановить</button>
-                {% if text2 %}
-                <p>{{ text2 }}</p>
+                {% if start_autocollect_vacancies %}
+                    <p>{{ start_autocollect_vacancies }}</p>
                 {% endif %}
                 {% if stop_autocollection %}
-                <p> {{ stop_autocollection }} </p>
+                    <p> {{ stop_autocollection }} </p>
                 {% endif %}
             </form>
         </div>
@@ -116,11 +52,11 @@
 
                 <!-- Кнопка для остановки для второго действия -->
                 <button class="button is-light" type="submit" onclick="setFormAction('stop_images')">Остановить</button>
-                {% if text3 %}
-                <p>{{ text3 }}</p>
+                {% if start_process_delete_images %}
+                    <p>{{ start_process_delete_images }}</p>
                 {% endif %}
                 {% if stop_delete_images %}
-                <p> {{ stop_delete_images }} </p>
+                    <p> {{ stop_delete_images }} </p>
                 {% endif %}
             </form>
         </div>
@@ -139,7 +75,7 @@
 
                 // Устанавливаем действие для кнопок второй формы
                 if (action === 'start_images') {
-                    imageForm.action = "{{ url_for('collect_vacancies') }}";
+                    imageForm.action = "{{ url_for('process_delete_images') }}";
                 } else if (action === 'stop_images') {
                     imageForm.action = "{{ url_for('stop_image_cleanup') }}";
                 }

@@ -116,7 +116,6 @@ def to_bd(data: tuple[WorkCart]) -> None:
     except OperationalError:
         print("Таблица VacancyCard уже существует.")
     for cart in data:
-        cart
         try:
             print(cart)
             # Используем get_or_create для предотвращения дублирования по cart_id

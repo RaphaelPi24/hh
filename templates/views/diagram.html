@@ -1,6 +1,7 @@
 <div id="skills_diagram">
-    {% if image %}
-        <img src="data:image/png;base64,{{ image }}" alt="Диаграмма">
+    {% if image_path %}
+        <img src="{{ image_path }}" alt="Диаграмма">
     {% else %}
         <p>Диаграмма не может быть построена</p>
     {% endif %}
+
