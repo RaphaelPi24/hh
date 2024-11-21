@@ -1,47 +1,29 @@
-import asyncio
 import base64
 import hashlib
 import json
-import os
 import time
-from collections.abc import Callable
-from typing import Union
+from sched import scheduler
 
 import redis
-from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template, request, url_for, redirect, session
 
 from analytics.data_for_diagram import get_popular_skills, get_comparing_skills_with_salary
 from analytics.diagrams import PopularSkillDiagramBuilder, send, SkillsSalaryDiagramBuilder
+from images import Image
 from models import VacancyCard
-from parsers.easy_parser import get_data, get_average_salary, to_bd, get_keyskills1
+from scheduler import process_profession_data, Scheduler
 
 app = Flask(__name__)
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 names_cache = []
 schedulers = {}
 app.secret_key = 'AbraKadabra5'
-
+scheduler = Scheduler()
+image = Image()
 
 @app.route('/', methods=['GET'])
 def get_base():
     return render_template('views/base_content.html')
-
-
-def delete_images():
-    print("Проверка изображений...")
-
-    path = r"C:\papka\net\_hh\static\image_diagram"
-    files = os.listdir(path)
-    for file in files:
-        name_file = file.split('.')[0]
-        full_file_path = os.path.join(path, file)
-        if name_file not in names_cache:
-            try:
-                os.remove(full_file_path)
-                print(f'Удалено изображение: {file}')
-            except Exception as e:
-                print(f'Ошибка при удалении {file}: {e}')
 
 
 @app.route('/admin', methods=['GET'])
@@ -87,9 +69,10 @@ def manual_collect_vacancies():
 def collect_vacancies():
     automatic_collection = request.form.get('auto_collect_vacancies') or None
     timer_for_automatic_collection = request.form.get('timer1') or None
+
     if automatic_collection:
         professions_for_autocollection = automatic_collection.split(',')
-        configuring_scheduler(timer_for_automatic_collection, process_profession_data, 'autocollection',
+        scheduler.start(timer_for_automatic_collection, process_profession_data, 'autocollection',
                               professions_for_autocollection)
         session['start_autocollection'] = 'Автосбор успешно запущен'
         # return render_template('views/admin.html', text=output1, text2=output2, text3=output3)
@@ -100,39 +83,24 @@ def collect_vacancies():
 def process_delete_images():
     timer_for_deleting_images = request.form.get('timer2') or None
     if timer_for_deleting_images:
-        configuring_scheduler(timer_for_deleting_images, delete_images, id='delete_images')
+        scheduler.start(timer_for_deleting_images, image.delete, params=names_cache, id='delete_images')
         session['start_delete_images'] = 'Автоудаление картинок успешно запущено'
+        scheduler.check_jobs()
     return redirect(url_for('get_admin'))
 
 
 @app.route('/stop_main_collection', methods=['POST'])
 def stop_main_collection():
-    stop_scheduler('autocollection')
+    scheduler.stop('autocollection')
     session['finish_autocollection'] = 'Автосбор остановлен'
     return redirect(url_for('get_admin'))
 
 
 @app.route('/stop_image_cleanup', methods=['POST'])
 def stop_image_cleanup():
-    stop_scheduler('delete_images')
+    scheduler.stop('delete_images')
     session['finish_delete_images'] = 'Автоудаление картинок остановлено'
     return redirect(url_for('get_admin'))
-
-
-# куда эту ф? самый верхний уровень парсера и запись в бд
-def process_profession_data(professions: [list, str]) -> None:
-    if isinstance(professions, str):
-        professions = [professions]
-    for profession in professions:
-        vacancy_data = asyncio.run(get_data(profession))
-        print('Первичные данные собраны')
-        # а тебя куда?
-        vacancy_data_have_average_salary = get_average_salary(vacancy_data)
-        print('Высчитаны данные вакансий со средними зарплатами')
-        full_vacancy_data = asyncio.run(get_keyskills1(vacancy_data_have_average_salary))
-        print('Собраны полные данные')
-        to_bd(full_vacancy_data)
-        print(f'Собраны данные по профессии {profession}')
 
 
 @app.route('/show_vacancies', methods=['POST'])
@@ -220,29 +188,6 @@ def get_show():
     return render_template('views/vacancies_cards.html', jobs=enumerate(data_vacancies, 1), time=execution_time)
 
 
-#
-# @app.route('/search_by_skills', methods=['POST'])
-# def search_by_skills():
-#     search_query = request.form['skill-input']
-#     data_vacancies = (
-#         VacancyCard
-#         .select(
-#             VacancyCard.name,
-#             VacancyCard.employer,
-#             VacancyCard.salary_from,
-#             VacancyCard.salary_to,
-#             VacancyCard.currency,
-#             VacancyCard.experience,
-#             VacancyCard.employment,
-#             VacancyCard.schedule,
-#             VacancyCard.url
-#         )
-#         .where(VacancyCard.skills.contains(search_query))
-#         .dicts()
-#     )
-#     return render_template('views/vacancies_cards.html', jobs=data_vacancies)
-
-
 @app.route('/vacancies', methods=['GET'])
 def get_page_vacancies():
     return render_template('views/filter_vacancies.html')
@@ -281,35 +226,13 @@ def post_analytics():
             image_path = cache_path
 
     else:
-        image = base64.b64decode(send(diagram, data_for_diagram))
-        filename = f'static/image_diagram/{cache_key}.png'
-        with open(filename, 'wb') as f:
-            f.write(image)
-        redis_client.setex(cache_key, 60, filename)
-        image_path = filename
+        image_code = base64.b64decode(send(diagram, data_for_diagram))
+        image_path = f'static/image_diagram/{cache_key}.png'
+        image.save(image_path, image_code)
+        redis_client.setex(cache_key, 60, image_path)
+
 
     return render_template('views/diagram.html', image_path=image_path)
-
-
-# Настройка планировщика
-def configuring_scheduler(time: str, f: Callable, id: str, params: Union[list, str, None] = None) -> None:
-    time = int(time)
-    if params is not None:
-        params = [params]
-    # job_id = str(uuid.uuid4())
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=f, trigger="interval", minutes=time, args=params, id=id)
-    scheduler.start()
-    schedulers[id] = scheduler
-
-
-def stop_scheduler(id: str) -> None:
-    if id in schedulers:
-        schedulers[id].shutdown()
-        del schedulers[id]
-        print(f'Планировщик с id - {id} отключён')
-    else:
-        print("Планировщик с таким идентификатором не найден.")
 
 
 if __name__ == '__main__':
