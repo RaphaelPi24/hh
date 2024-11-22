@@ -4,7 +4,6 @@ import json
 import time
 from sched import scheduler
 
-import redis
 from flask import Flask, render_template, request, url_for, redirect, session
 
 from analytics.data_for_diagram import get_popular_skills, get_comparing_skills_with_salary
@@ -12,14 +11,14 @@ from analytics.diagrams import PopularSkillDiagramBuilder, send, SkillsSalaryDia
 from images import Image
 from models import VacancyCard
 from scheduler import process_profession_data, Scheduler
+from vacancy_service import Form, Cash, Model
 
 app = Flask(__name__)
-redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-names_cache = []
-schedulers = {}
+
 app.secret_key = 'AbraKadabra5'
 scheduler = Scheduler()
 image = Image()
+
 
 @app.route('/', methods=['GET'])
 def get_base():
@@ -73,9 +72,8 @@ def collect_vacancies():
     if automatic_collection:
         professions_for_autocollection = automatic_collection.split(',')
         scheduler.start(timer_for_automatic_collection, process_profession_data, 'autocollection',
-                              professions_for_autocollection)
+                        professions_for_autocollection)
         session['start_autocollection'] = 'Автосбор успешно запущен'
-        # return render_template('views/admin.html', text=output1, text2=output2, text3=output3)
     return redirect(url_for('get_admin'))
 
 
@@ -83,7 +81,7 @@ def collect_vacancies():
 def process_delete_images():
     timer_for_deleting_images = request.form.get('timer2') or None
     if timer_for_deleting_images:
-        scheduler.start(timer_for_deleting_images, image.delete, params=names_cache, id='delete_images')
+        scheduler.start(timer_for_deleting_images, image.delete, params=Cash.names_cache, id='delete_images')
         session['start_delete_images'] = 'Автоудаление картинок успешно запущено'
         scheduler.check_jobs()
     return redirect(url_for('get_admin'))
@@ -105,87 +103,24 @@ def stop_image_cleanup():
 
 @app.route('/show_vacancies', methods=['POST'])
 def get_show():
-    select = request.form.get('search-type')
-    full_search_query = request.form.get('main_query')
-    salary_from = request.form.get('salary_from') or None
-    salary_to = request.form.get('salary_to') or None
-    city = request.form.get('city') or None
-    company = request.form.get('company') or None
-    remote = request.form.get('remote') or None  # on - если отмечен.  None
-
     start = time.time()
 
-    cache_key = hashlib.md5(
-        f"{full_search_query}{salary_from}{salary_to}{city}{company}{remote}".encode('utf-8')
-    ).hexdigest()
-    cache_data = redis_client.get(cache_key)
-    names_cache.append(cache_key)
-    if cache_data:
-        data_vacancies = json.loads(cache_data)
-    else:
-        if select == 'title':
-            search_queries_from_words = full_search_query.split()
-            conditions = [VacancyCard.name.contains(query) for query in search_queries_from_words]
+    form = request.form
+    valid_form = Form(form)
+    cash = Cash(valid_form)
+    model = Model(valid_form)
+    data = cash.get()
+    if data is None:
+        if valid_form.select == 'title':
+            data = model.get_cards_by_title()
+        elif valid_form.select == 'skill':
+            data = model.get_cards_by_skill()
+        cash.add(data)
 
-            # Добавляем фильтр по зарплате (если значения указаны)
-            if salary_from:
-                conditions.append(VacancyCard.salary_from >= int(salary_from))
-            if salary_to:
-                conditions.append(VacancyCard.salary_to <= int(salary_to))
-
-            # Добавляем фильтр по городу (если указан)
-            if city:
-                conditions.append(VacancyCard.area == city)
-
-            # Добавляем фильтр по компании (если указана)
-            if company:
-                conditions.append(VacancyCard.employer.contains(company))
-
-            # Добавляем фильтр по удаленной работе (если включен чекбокс)
-            if remote == 'on':
-                conditions.append(VacancyCard.schedule.contains('Удаленная работа'))
-
-            # Объединяем все условия с AND (если нужно OR - используйте reduce(operator.or_, conditions))
-            data_vacancies = list(
-                VacancyCard
-                .select(
-                    VacancyCard.name,
-                    VacancyCard.employer,
-                    VacancyCard.salary_from,
-                    VacancyCard.salary_to,
-                    VacancyCard.currency,
-                    VacancyCard.experience,
-                    VacancyCard.employment,
-                    VacancyCard.schedule,
-                    VacancyCard.url
-                )
-                .where(*conditions)  # Применяем все условия
-                .dicts()
-            )
-
-        elif select == 'skill':
-            data_vacancies = (
-                VacancyCard
-                .select(
-                    VacancyCard.name,
-                    VacancyCard.employer,
-                    VacancyCard.salary_from,
-                    VacancyCard.salary_to,
-                    VacancyCard.currency,
-                    VacancyCard.experience,
-                    VacancyCard.employment,
-                    VacancyCard.schedule,
-                    VacancyCard.url
-                )
-                .where(VacancyCard.skills.contains(full_search_query))
-                .dicts()
-            )
-
-        redis_client.setex(cache_key, 60, json.dumps(list(data_vacancies)))
     end = time.time()
     execution_time = end - start
     # jobs передается пустой, но не пустой
-    return render_template('views/vacancies_cards.html', jobs=enumerate(data_vacancies, 1), time=execution_time)
+    return render_template('views/vacancies_cards.html', jobs=enumerate(data, 1), time=execution_time)
 
 
 @app.route('/vacancies', methods=['GET'])
@@ -230,7 +165,6 @@ def post_analytics():
         image_path = f'static/image_diagram/{cache_key}.png'
         image.save(image_path, image_code)
         redis_client.setex(cache_key, 60, image_path)
-
 
     return render_template('views/diagram.html', image_path=image_path)
 
