@@ -3,7 +3,7 @@ import os
 
 
 class Image:
-    path = r"C:\papka\net\_hh\static\image_diagram"
+    path = r"C:\papka\net\_hh\static\image_diagram" # относителььный путь petlib
 
     def delete(self, names_cache):
         print("Процесс удаления изображений...")

@@ -1,6 +1,4 @@
 import base64
-import hashlib
-import json
 import time
 from sched import scheduler
 
@@ -9,16 +7,15 @@ from flask import Flask, render_template, request, url_for, redirect, session
 from analytics.data_for_diagram import get_popular_skills, get_comparing_skills_with_salary
 from analytics.diagrams import PopularSkillDiagramBuilder, send, SkillsSalaryDiagramBuilder
 from images import Image
-from models import VacancyCard
 from scheduler import process_profession_data, Scheduler
-from vacancy_service import Form, Cash, Model
+from vacancy_service import Form, Cache, Model
 
 app = Flask(__name__)
 
 app.secret_key = 'AbraKadabra5'
 scheduler = Scheduler()
 image = Image()
-
+cache = Cache()
 
 @app.route('/', methods=['GET'])
 def get_base():
@@ -81,7 +78,7 @@ def collect_vacancies():
 def process_delete_images():
     timer_for_deleting_images = request.form.get('timer2') or None
     if timer_for_deleting_images:
-        scheduler.start(timer_for_deleting_images, image.delete, params=Cash.names_cache, id='delete_images')
+        scheduler.start(timer_for_deleting_images, image.delete, params=Cache.names_cache, id='delete_images')
         session['start_delete_images'] = 'Автоудаление картинок успешно запущено'
         scheduler.check_jobs()
     return redirect(url_for('get_admin'))
@@ -107,16 +104,12 @@ def get_show():
 
     form = request.form
     valid_form = Form(form)
-    cash = Cash(valid_form)
+    cache = Cache(valid_form)
     model = Model(valid_form)
-    data = cash.get()
+    data = cache.get()
     if data is None:
-        if valid_form.select == 'title':
-            data = model.get_cards_by_title()
-        elif valid_form.select == 'skill':
-            data = model.get_cards_by_skill()
-        cash.add(data)
-
+        data = model.get()
+        cache.add(data)
     end = time.time()
     execution_time = end - start
     # jobs передается пустой, но не пустой

@@ -1,10 +1,9 @@
 import peewee as pw
-import psycopg2
 
 db = pw.PostgresqlDatabase('hh', host='localhost', port=5432, user='userhh', password='159')
-#db1 = pw.PostgresqlDatabase('hh', host='localhost', port=5432, user='postgres', password='cor')
+
 db.connection()
-#db1.connection()
+
 
 class BaseModel(pw.Model):
     id = pw.AutoField(primary_key=True)
@@ -31,5 +30,6 @@ class VacancyCard(BaseModel):
     url = pw.CharField()
     skills = pw.CharField()
     average_salary = pw.IntegerField()
+
 
 VacancyCard.create_table()

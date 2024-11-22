@@ -40,7 +40,7 @@ class DiagramBuilder:
         plot_url = base64.b64encode(img.getvalue()).decode('utf8')
         return plot_url
 
-
+# убрать обработку данных из диаграммы
 class SkillsSalaryDiagramBuilder(DiagramBuilder):
     xlabel: str = None
     ylabel: str = None

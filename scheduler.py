@@ -7,6 +7,7 @@ from parsers.easy_parser import get_data, get_average_salary, get_keyskills1, to
 
 
 def process_profession_data(professions: [list, str]) -> None:
+    #
     if isinstance(professions, str):
         professions = [professions]
     for profession in professions:
@@ -36,7 +37,7 @@ class Scheduler:
         except Exception as e:
             print(e)
 
-
+# добавить задачу
     def configuring_scheduler(self, time: str, f: Callable, id: str, params: Union[list, str, None] = None) -> None:
         time = int(time)
         if params is not None:
