@@ -17,6 +17,7 @@ scheduler = Scheduler()
 image = Image()
 cache = Cache()
 
+
 @app.route('/', methods=['GET'])
 def get_base():
     return render_template('views/base_content.html')
@@ -25,30 +26,13 @@ def get_base():
 @app.route('/admin', methods=['GET'])
 def get_admin():
     # Обработка сообщений для ручного сбора
-    start_autocollection = stop_autocollection = start_delete_images = stop_process_delete_images = ''
-    output_for_manual_collect_vacancies = session.pop('manual_collection', None)
-
-    # Обработка сообщений для автосбора вакансий
-    if 'finish_autocollection' in session:
-        session.pop('start_autocollection', None)
-        stop_autocollection = session.pop('finish_autocollection')
-    elif 'start_autocollection' in session:
-        start_autocollection = session.get('start_autocollection')
-
-    # Обработка сообщений для удаления изображений
-    if 'finish_delete_images' in session:
-        session.pop('start_delete_images', None)
-        stop_process_delete_images = session.pop('finish_delete_images')
-    elif 'start_delete_images' in session:
-        start_delete_images = session.get('start_delete_images')
-
     return render_template(
         'views/admin.html',
-        message_manual_collect_vacancies=output_for_manual_collect_vacancies,
-        start_autocollect_vacancies=start_autocollection,
-        stop_autocollection=stop_autocollection,
-        start_process_delete_images=start_delete_images,
-        stop_delete_images=stop_process_delete_images
+        message_manual_collect_vacancies=cache.get_manual_collection(),
+        start_autocollect_vacancies=cache.get_auto_collection(),
+        stop_autocollection=cache.get_auto_collection(),
+        start_process_delete_images=cache.get_delete_images(),
+        stop_delete_images=cache.get_delete_images()
     )
 
 
@@ -57,7 +41,7 @@ def manual_collect_vacancies():
     manual_collection = request.form.get('input_prof_name') or None
     if manual_collection:
         process_profession_data(manual_collection)
-        session['manual_collection'] = 'Сбор успешно завершён'
+        cache.set_message('manual_collection', 'Сбор успешно завершён')
     return redirect(url_for('get_admin'))
 
 
@@ -70,7 +54,7 @@ def collect_vacancies():
         professions_for_autocollection = automatic_collection.split(',')
         scheduler.start(timer_for_automatic_collection, process_profession_data, 'autocollection',
                         professions_for_autocollection)
-        session['start_autocollection'] = 'Автосбор успешно запущен'
+        cache.set_message('start_autocollection', 'Автосбор успешно запущен')
     return redirect(url_for('get_admin'))
 
 
@@ -79,7 +63,7 @@ def process_delete_images():
     timer_for_deleting_images = request.form.get('timer2') or None
     if timer_for_deleting_images:
         scheduler.start(timer_for_deleting_images, image.delete, params=Cache.names_cache, id='delete_images')
-        session['start_delete_images'] = 'Автоудаление картинок успешно запущено'
+        cache.set_message('start_delete_images', 'Автоудаление картинок успешно запущено')
         scheduler.check_jobs()
     return redirect(url_for('get_admin'))
 
@@ -87,14 +71,14 @@ def process_delete_images():
 @app.route('/stop_main_collection', methods=['POST'])
 def stop_main_collection():
     scheduler.stop('autocollection')
-    session['finish_autocollection'] = 'Автосбор остановлен'
+    cache.set_message('finish_autocollection', 'Автосбор остановлен')
     return redirect(url_for('get_admin'))
 
 
 @app.route('/stop_image_cleanup', methods=['POST'])
 def stop_image_cleanup():
     scheduler.stop('delete_images')
-    session['finish_delete_images'] = 'Автоудаление картинок остановлено'
+    cache.set_message('finish_delete_images', 'Автоудаление картинок остановлено')
     return redirect(url_for('get_admin'))
 
 
@@ -104,7 +88,7 @@ def get_show():
 
     form = request.form
     valid_form = Form(form)
-    cache = Cache(valid_form)
+    cache.get_form(valid_form)
     model = Model(valid_form)
     data = cache.get()
     if data is None:
