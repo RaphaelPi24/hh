@@ -73,8 +73,8 @@ def get_keyskills(data: list[WorkCart]) -> list[WorkCart]:
         url = cart.api_url
         if url:
             query_keyskills = requests.get(url, headers=head, timeout=5).json()
-        keyskills = query_keyskills.get('key_skills')
-        skills_list = [skills_dict.get('name') for skills_dict in keyskills]
+        keyskills = query_keyskills.get_json_vacancy('key_skills')
+        skills_list = [skills_dict.get_json_vacancy('name') for skills_dict in keyskills]
         cart.skills = ','.join(skills_list)
     return data
 
@@ -93,9 +93,9 @@ async def get_skills_from_1_cart(cart: WorkCart) -> WorkCart:
     async with aiohttp.ClientSession() as session:
         async with session.get(cart.api_url) as response:
             query_skills = await response.json()
-            skills = query_skills.get('key_skills')
+            skills = query_skills.get_json_vacancy('key_skills')
             if skills is not None:
-                skills_list = [skills_dict.get('name') for skills_dict in skills]
+                skills_list = [skills_dict.get_json_vacancy('name') for skills_dict in skills]
                 cart.skills = ','.join(skills_list)
     return cart
 

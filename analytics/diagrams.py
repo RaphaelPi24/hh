@@ -3,6 +3,8 @@ import io
 
 from matplotlib import pyplot as plt
 
+from images import Image
+
 
 class DiagramBuilder:
     xlabel: str = None
@@ -40,6 +42,7 @@ class DiagramBuilder:
         plot_url = base64.b64encode(img.getvalue()).decode('utf8')
         return plot_url
 
+
 # убрать обработку данных из диаграммы
 class SkillsSalaryDiagramBuilder(DiagramBuilder):
     xlabel: str = None
@@ -75,13 +78,11 @@ class PopularSkillDiagramBuilder(DiagramBuilder):
         return plot
 
 
-def send(diagram, data):
+def send(diagram, data, path):
     diagram.prepare_data(data)
     diagram.plot((10, 30))
-    return diagram.to_base64()
-
-
-
+    image_code = base64.b64decode(diagram.to_base64())
+    Image().save(path, image_code)
 
 
 def create_diagramm_skills_salary(data):
@@ -133,7 +134,7 @@ def create_diagram_popular_skills(data):
     # Разделение на метки и значения после сортировки
     labels, values = zip(*sorted_data)
 
-    #fig, ax1 = plt.subplots(figsize=(12, 30))
+    # fig, ax1 = plt.subplots(figsize=(12, 30))
 
     # # Столбцы по количеству
     # ax1.barh(labels, counts, color='skyblue', label='Количество навыков')

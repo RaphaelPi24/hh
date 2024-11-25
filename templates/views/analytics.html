@@ -6,11 +6,13 @@
             <!-- Форма 1 -->
             <div class="form-container_anal">
                 <h2>Составление диаграммы популярных навыков для профессии</h2>
-                <form hx-post="{{ post_analytics }}" hx-target="#results" hx-swap="innerHTML">
+                <form action="{{ url_for('popular_skills') }}" method="POST">
                     <label for="profession">Профессия</label>
                     <input type="text" id="profession" name="profession" placeholder="Введите профессию">
 
-                    <div class="unique-container"><button type="submit" name="">Составить диаграмму</button></div>
+                    <div class="unique-container">
+                        <button type="submit" name="">Составить диаграмму</button>
+                    </div>
                 </form>
             </div>
 
@@ -18,11 +20,13 @@
             <div class="form-container_anal">
                 <h2>Совмещение умений с зарплатой, укажите для какой профессии вы хотите видеть статистику
                 </h2>
-                <form hx-post="{{ post_analytics }}" hx-target="#results" hx-swap="innerHTML">
+                <form action="{{ url_for('skills_salary') }}" method="POST">
                     <label for="profession-stats">Профессия</label>
                     <input type="text" id="profession-stats" name="profession_stats" placeholder="Введите профессию">
 
-                    <div class="unique-container"><button type="submit">Показать статистику</button></div>
+                    <div class="unique-container">
+                        <button type="submit">Показать статистику</button>
+                    </div>
                 </form>
             </div>
 
@@ -33,15 +37,25 @@
                     <label for="company">Компания</label>
                     <input type="text" id="company" name="company" placeholder="Введите название компании">
 
-                    <div class="unique-container"><button class="button_anal" type="submit">Показать уровень зарплат</button></div>
+                    <div class="unique-container">
+                        <button class="button_anal" type="submit">Показать уровень зарплат</button>
+                    </div>
                 </form>
             </div>
 
 
         </div>
         <div id="results">
+            {{ image_path }}
+            <div id="skills_diagram">
+                {% if image_path %}
+                    <img src="{{ image_path }}" alt="Диаграмма">
+                {% else %}
+                    <p>Диаграмма не может быть построена</p>
+                {% endif %}
 
+
+            </div>
         </div>
-    </div>
 
 {% endblock %}

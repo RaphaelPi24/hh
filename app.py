@@ -2,8 +2,9 @@ import base64
 import time
 from sched import scheduler
 
-from flask import Flask, render_template, request, url_for, redirect, session
+from flask import Flask, render_template, request, url_for, redirect
 
+from analytics.analytic import get_valid_data, prepare_data
 from analytics.data_for_diagram import get_popular_skills, get_comparing_skills_with_salary
 from analytics.diagrams import PopularSkillDiagramBuilder, send, SkillsSalaryDiagramBuilder
 from images import Image
@@ -90,7 +91,7 @@ def get_show():
     valid_form = Form(form)
     cache.get_form(valid_form)
     model = Model(valid_form)
-    data = cache.get()
+    data = cache.get_json_vacancy()
     if data is None:
         data = model.get()
         cache.add(data)
@@ -107,43 +108,30 @@ def get_page_vacancies():
 
 @app.route('/analytics', methods=['GET'])
 def get_analytics():
-    return render_template('views/analytics.html')
+    return render_template('views/analytics.html', image_path=cache.get_last_entry())
 
 
-@app.route('/analytics', methods=['POST'])
-def post_analytics():
-    profession = request.form.get('profession') or None
-    profession2 = request.form.get('profession_stats') or None
-    data_for_diagram = diagram = None
-    cache_path = cache_key = None
+@app.route('/skills_salary_diagram', methods=['POST'])
+def skills_salary():
+    profession = get_valid_data(request.form.get('profession_stats'))
+    if profession:
+        data_for_diagram, diagram, path = prepare_data(profession, cache,
+                                                                        get_comparing_skills_with_salary,
+                                                                        SkillsSalaryDiagramBuilder)
+        send(diagram, data_for_diagram, path)
+        cache.save_path_image(profession, path)  # маг число, запрятать в cache?
+    return redirect(url_for('get_analytics'))
 
-    if profession is not None:
-        cache_key = profession
-        cache_path = redis_client.get(cache_key)
-        if not cache_path:
-            data_for_diagram = get_popular_skills(profession)
-            diagram = PopularSkillDiagramBuilder()
-    elif profession2 is not None:
-        cache_key = profession2
-        cache_path = redis_client.get(profession2)
-        if not cache_path:
-            data_for_diagram = get_comparing_skills_with_salary(profession2)
-            diagram = SkillsSalaryDiagramBuilder()
 
-    if cache_path:
-        if isinstance(cache_path, bytes):
-            image_path = cache_path.decode('utf-8')
-        else:
-            # Если это уже строка, используем как есть
-            image_path = cache_path
-
-    else:
-        image_code = base64.b64decode(send(diagram, data_for_diagram))
-        image_path = f'static/image_diagram/{cache_key}.png'
-        image.save(image_path, image_code)
-        redis_client.setex(cache_key, 60, image_path)
-
-    return render_template('views/diagram.html', image_path=image_path)
+@app.route('/popular_skills_diagram', methods=['POST'])
+def popular_skills():
+    profession = get_valid_data(request.form.get('profession'))
+    if profession:
+        data_for_diagram, diagram, path = prepare_data(profession, cache, get_popular_skills,
+                                                                        PopularSkillDiagramBuilder)
+        send(diagram, data_for_diagram, path)
+        cache.save_path_image(profession , path) # маг число, запрятать в cache?
+    return redirect(url_for('get_analytics'))
 
 
 if __name__ == '__main__':

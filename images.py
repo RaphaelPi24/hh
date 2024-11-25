@@ -1,25 +1,38 @@
+from pathlib import Path
 import base64
-import os
-
 
 class Image:
-    path = r"C:\papka\net\_hh\static\image_diagram" # относителььный путь petlib
+    path = Path("static/image_diagram")  # Относительный путь как объект Path
 
     def delete(self, names_cache):
         print("Процесс удаления изображений...")
 
-        files = os.listdir(self.path)
-        for file in files:
-            name_file = file.split('.')[0]
-            full_file_path = os.path.join(self.path, file)
-            if name_file not in names_cache:
-                try:
-                    os.remove(full_file_path)
-                    print(f'Удалено изображение: {file}') # ????
-                except Exception as e:
-                    print(f'Ошибка при удалении {file}: {e}')
+        # Перебираем файлы в директории
+        for file in self.path.iterdir():
+            if file.is_file():
+                name_file = file.stem  # Получаем имя файла без расширения
+                if name_file not in names_cache:
+                    try:
+                        file.unlink()  # Удаляем файл
+                        print(f'Удалено изображение: {file.name}')
+                    except Exception as e:
+                        print(f'Ошибка при удалении {file.name}: {e}')
 
-    def save(self, name_file: str, image: base64):
-        pathfile = os.path.join(self.path, name_file)
-        with open(pathfile, 'wb') as f:
+    def save(self, pathfile: str, image: base64):
+        # Преобразуем путь в абсолютный
+        full_pathfile = Path(pathfile).resolve()  # Полный путь файла
+        directory = full_pathfile.parent
+
+        # Проверяем, существует ли элемент, и если да, это директория
+        if directory.exists() and not directory.is_dir():
+            raise FileExistsError(f"Невозможно создать директорию: {directory} уже существует как файл")
+
+        # Создаём директорию, если она не существует
+        directory.mkdir(parents=True, exist_ok=True)
+
+        # Сохраняем файл
+        with full_pathfile.open('wb') as f:
             f.write(image)
+
+    def get_path(self, title: str) -> Path:
+        return self.path / f"{title}.png"
