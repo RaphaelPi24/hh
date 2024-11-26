@@ -28,8 +28,32 @@ class VacancyCard(BaseModel):
     employment = pw.CharField()
     api_url = pw.CharField()
     url = pw.CharField()
-    skills = pw.CharField()
     average_salary = pw.IntegerField()
 
+class Skill(BaseModel):
+    class Meta:
+        table_name = 'Skill'
 
+    name = pw.CharField(unique=True)  # Название навыка
+
+
+class VacancySkill(BaseModel):
+    class Meta:
+        table_name = 'VacancySkill'
+
+    vacancy = pw.ForeignKeyField(VacancyCard, backref='skills', on_delete='CASCADE')
+    skill = pw.ForeignKeyField(Skill, backref='vacancies', on_delete='CASCADE')
+# if __name__ == __main__
 VacancyCard.create_table()
+Skill.create_table()
+VacancySkill.create_table()
+
+# def add_vacancy_with_skills(vacancy_data, skills_list):
+#     with db.atomic():
+#         # Добавляем вакансию
+#         vacancy = VacancyCard.create(**vacancy_data)
+#
+#         # Обрабатываем навыки
+#         for skill_name in skills_list:
+#             skill, created = Skill.get_or_create(name=skill_name.strip())
+#             VacancySkill.create(vacancy=vacancy, skill=skill)

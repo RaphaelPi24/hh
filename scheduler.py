@@ -4,7 +4,7 @@ from typing import Callable, Union, List
 from apscheduler.schedulers import SchedulerAlreadyRunningError
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from parsers.easy_parser import get_data, get_average_salary, get_keyskills1, to_bd
+from parsers.easy_parser import get_data, get_average_salary, get_keyskills1, to_bd, to_bd_skills
 
 
 def process_profession_data(professions: [list, str]) -> None:
@@ -17,9 +17,10 @@ def process_profession_data(professions: [list, str]) -> None:
         # а тебя куда?
         vacancy_data_have_average_salary = get_average_salary(vacancy_data)
         print('Высчитаны данные вакансий со средними зарплатами')
-        full_vacancy_data = asyncio.run(get_keyskills1(vacancy_data_have_average_salary))
+        data_skills = asyncio.run(get_keyskills1(vacancy_data_have_average_salary))
         print('Собраны полные данные')
-        to_bd(full_vacancy_data)
+        to_bd(vacancy_data)
+        to_bd_skills()
         print(f'Собраны данные по профессии {profession}')
 
 

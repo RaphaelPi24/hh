@@ -5,12 +5,12 @@ import aiohttp
 import requests
 from peewee import OperationalError, IntegrityError
 
-from models import VacancyCard
+from models import VacancyCard, Skill
 
 url = 'https://api.hh.ru/vacancies'
 head = {'Accept': '*/*',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'}
-
+all_skills = []
 
 @dataclass
 class WorkCart:
@@ -67,14 +67,14 @@ async def get_data(profession) -> list[WorkCart]:
         jobs.append(cart)
     return jobs
 
-
+# для синхронной работы
 def get_keyskills(data: list[WorkCart]) -> list[WorkCart]:
     for cart in data:
         url = cart.api_url
         if url:
             query_keyskills = requests.get(url, headers=head, timeout=5).json()
-        keyskills = query_keyskills.get_json_vacancy('key_skills')
-        skills_list = [skills_dict.get_json_vacancy('name') for skills_dict in keyskills]
+        keyskills = query_keyskills.get('key_skills')
+        skills_list = [skills_dict.get('name') for skills_dict in keyskills]
         cart.skills = ','.join(skills_list)
     return data
 
@@ -93,11 +93,14 @@ async def get_skills_from_1_cart(cart: WorkCart) -> WorkCart:
     async with aiohttp.ClientSession() as session:
         async with session.get(cart.api_url) as response:
             query_skills = await response.json()
-            skills = query_skills.get_json_vacancy('key_skills')
+            skills = query_skills.get('key_skills')
+
             if skills is not None:
-                skills_list = [skills_dict.get_json_vacancy('name') for skills_dict in skills]
-                cart.skills = ','.join(skills_list)
-    return cart
+                skills_list = [skills_dict.get('name') for skills_dict in skills]
+                #cart.skills = ','.join(skills_list)
+                all_skills.extend(skills_list)
+    #return cart
+
 
 def get_average_salary(carts: list[WorkCart]) -> list[WorkCart]:
     for cart in carts:
@@ -144,3 +147,10 @@ def to_bd(data: tuple[WorkCart]) -> None:
                 print(f"Vacancy {cart.name} already exists.")
         except IntegrityError as e:
             print(f"Error saving vacancy: {e}")
+
+def to_bd_skills() -> None:
+    data = list(set(skill.strip() for skill in all_skills if skill))
+    for skill in data:
+        # Проверяем, существует ли запись в БД
+        if not Skill.select().where(Skill.name == skill).exists():
+            Skill.create(name=skill)
