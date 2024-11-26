@@ -132,7 +132,7 @@ def popular_skills():
         send(diagram, data_for_diagram, path)
         cache.save_path_image(profession , path) # маг число, запрятать в cache?
     return redirect(url_for('get_analytics'))
-
+#print()
 
 if __name__ == '__main__':
     app.run()
