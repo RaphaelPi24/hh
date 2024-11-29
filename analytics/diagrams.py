@@ -50,12 +50,7 @@ class SkillsSalaryDiagramBuilder(DiagramBuilder):
     title: str = None
 
     def prepare_data(self, data: dict) -> None:
-        for k in data.keys():
-            if isinstance(data[k]['salary'], list):
-                data[k]['salary'] = 0
-        data = {k: v for k, v in data.items() if isinstance(v['salary'], (int, float)) and v['salary'] >= 0}
-        # Сортировка по зарплате в порядке убывания
-        data = dict(sorted(data.items(), key=lambda x: x[1]['salary'], reverse=False))
+
 
         self.labels = list(data.keys())
         self.counts = [d['count'] for d in data.values()]
@@ -70,8 +65,8 @@ class SkillsSalaryDiagramBuilder(DiagramBuilder):
 
 class PopularSkillDiagramBuilder(DiagramBuilder):
     def prepare_data(self, data: dict) -> None:
-        sorted_data = sorted(data.items(), key=lambda x: x[1])  # Сортировка по возрастанию
-        self.labels, self.values = zip(*sorted_data)
+          # Сортировка по возрастанию
+        self.labels, self.values = zip(*data)
 
     def get_plot(self):
         plot = self.ax.barh(self.labels, self.values, color='skyblue')

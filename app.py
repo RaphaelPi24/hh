@@ -4,12 +4,12 @@ from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
 
-from analytics.analytic import get_valid_data, prepare_data
-from analytics.data_for_diagram import get_popular_skills, get_comparing_skills_with_salary
+from analytics.analytic import get_valid_data, prepare_data, PopularSkillsDiagramProcessor
 from analytics.diagrams import PopularSkillDiagramBuilder, send, SkillsSalaryDiagramBuilder
 from images import Image
 from scheduler import process_profession_data, Scheduler
-from vacancy_service import Form, Cache, Model
+from vacancy_service import Form, Cache
+from database_queries import Model, get_popular_skills, get_comparing_skills_with_salary
 
 app = Flask(__name__)
 
@@ -126,11 +126,11 @@ def skills_salary():
 @app.route('/popular_skills_diagram', methods=['POST'])
 def popular_skills():
     profession = get_valid_data(request.form.get('profession'))
-    if profession:
-        data_for_diagram, diagram, path = prepare_data(profession, cache, get_popular_skills,
-                                                                        PopularSkillDiagramBuilder)
-        send(diagram, data_for_diagram, path)
-        cache.save_path_image(profession , path) # маг число, запрятать в cache?
+    if profession is None:
+        return 'Not Found', 404
+
+    processor = PopularSkillsDiagramProcessor(cache)
+    processor.process(profession)
     return redirect(url_for('get_analytics'))
 #print()
 

@@ -4,14 +4,45 @@ from typing import Optional
 
 import requests
 
-from analytics.data_for_diagram import get_popular_skills
+from database_queries import get_popular_skills
 from analytics.diagrams import send, PopularSkillDiagramBuilder
 from images import Image
 from vacancy_service import Cache
 
 
-def process_of_processing_diagrams(input_name: str, request: requests, cache: Cache) -> None:
+class BaseDiagramProcessor:
+    query = None
+    builder_class = None
 
+    def __init__(self, cache: Cache):
+        self.cache = cache
+
+    def process(self, profession: str) -> None:
+        if profession:
+            data_for_diagram, diagram, path = prepare_data(
+                profession, self.cache, get_popular_skills,
+                PopularSkillDiagramBuilder
+            )
+            send(diagram, data_for_diagram, path)
+            self.cache.save_path_image(profession, path)
+
+
+class SalaryDiagramProcessor(BaseDiagramProcessor):
+    query = get_comparing_skills_with_salary
+    builder_class = SkillsSalaryDiagramBuilder
+
+
+class PopularSkillsDiagramProcessor(BaseDiagramProcessor):
+    query = get_popular_skills
+    builder_class = PopularSkillDiagramBuilder
+
+
+def process_of_processing_diagrams(profession: str, request: requests, cache: Cache) -> None:
+    if profession:
+        data_for_diagram, diagram, path = prepare_data(profession, cache, get_popular_skills,
+                                                       PopularSkillDiagramBuilder)
+        send(diagram, data_for_diagram, path)
+        cache.save_path_image(profession, path)
 
 
 def get_valid_data(profession) -> Optional[str]:
