@@ -3,13 +3,13 @@ from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
 
-from analytics.analytic import get_valid_data, prepare_data, PopularSkillsDiagramProcessor
+from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, get_valid_data
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
 from cache import Cache, CacheSession, VacancyCache, CacheSessionPathImage
 from database_queries import Model, get_comparing_skills_with_salary
 from images import Image
 from scheduler import process_profession_data, Scheduler
-from validation_forms import Form
+from forms import Form
 
 app = Flask(__name__)
 

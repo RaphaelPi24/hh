@@ -6,7 +6,7 @@ from typing import Optional, List, Dict
 from peewee import Query
 
 from models import VacancyCard
-from validation_forms import Form
+from forms import Form
 
 
 class Model:

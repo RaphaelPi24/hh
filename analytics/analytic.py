@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 import requests
 
@@ -7,6 +6,7 @@ from analytics.diagrams import send, PopularSkillDiagramBuilder
 from cache import Cache
 from database_queries import get_popular_skills
 from images import Image
+from validation import normalize_string, validate_letters_with_spaces
 
 
 class BaseDiagramProcessor:
@@ -44,14 +44,6 @@ def process_of_processing_diagrams(profession: str, request: requests, cache: Ca
         cache.save_path_image(profession, path)
 
 
-def get_valid_data(profession) -> Optional[str]:
-    if profession is not None and len(profession) > 0:
-        profession = profession.strip()
-        if re.fullmatch(r"[A-Za-zА-Яа-яЁё ]+", profession):
-            return profession
-    return None
-
-
 def prepare_data(profession: str, cache: Cache, func_for_get_data: callable, class_for_draw: callable) -> tuple:
     if profession is not None:
         path = cache.get_pathfile_for_profession(profession)
@@ -60,5 +52,15 @@ def prepare_data(profession: str, cache: Cache, func_for_get_data: callable, cla
         else:
             data_for_diagram = func_for_get_data(profession)
             diagram = class_for_draw()
-            path = Image().get_path(profession)
+            path = Image.get_path(profession)
     return data_for_diagram, diagram, path
+
+
+def get_valid_data(profession) -> str | None:
+    try:
+        normal_profession = normalize_string(profession)
+        valid_profession = validate_letters_with_spaces(normal_profession)
+    except ValueError as e:
+        return e # ????
+    return valid_profession
+

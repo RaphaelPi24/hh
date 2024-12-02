@@ -4,7 +4,7 @@ from pathlib import Path
 
 from redis import Redis
 
-from validation_forms import Form
+from forms import Form
 
 
 class Cache:
