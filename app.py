@@ -1,22 +1,23 @@
-import base64
 import time
 from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
 
 from analytics.analytic import get_valid_data, prepare_data, PopularSkillsDiagramProcessor
-from analytics.diagrams import PopularSkillDiagramBuilder, send, SkillsSalaryDiagramBuilder
+from analytics.diagrams import send, SkillsSalaryDiagramBuilder
+from cache import Cache, CacheSession, VacancyCache, CacheSessionPathImage
+from database_queries import Model, get_comparing_skills_with_salary
 from images import Image
 from scheduler import process_profession_data, Scheduler
-from vacancy_service import Form, Cache
-from database_queries import Model, get_popular_skills, get_comparing_skills_with_salary
+from validation_forms import Form
 
 app = Flask(__name__)
 
 app.secret_key = 'AbraKadabra5'
 scheduler = Scheduler()
-image = Image()
-cache = Cache()
+cache_session = CacheSession()
+vacancy_cache = VacancyCache()
+cache_path_image = CacheSessionPathImage()
 
 
 @app.route('/', methods=['GET'])
@@ -29,11 +30,11 @@ def get_admin():
     # Обработка сообщений для ручного сбора
     return render_template(
         'views/admin.html',
-        message_manual_collect_vacancies=cache.get_manual_collection(),
-        start_autocollect_vacancies=cache.get_auto_collection(),
-        stop_autocollection=cache.get_auto_collection(),
-        start_process_delete_images=cache.get_delete_images(),
-        stop_delete_images=cache.get_delete_images()
+        message_manual_collect_vacancies=cache_session.get_manual_collection(),
+        start_autocollect_vacancies=cache_session.get_auto_collection(),
+        stop_autocollection=cache_session.get_auto_collection(),
+        start_process_delete_images=cache_session.get_delete_images(),
+        stop_delete_images=cache_session.get_delete_images()
     )
 
 
@@ -42,7 +43,7 @@ def manual_collect_vacancies():
     manual_collection = request.form.get('input_prof_name') or None
     if manual_collection:
         process_profession_data(manual_collection)
-        cache.set_message('manual_collection', 'Сбор успешно завершён')
+        cache_session.set_message('manual_collection', 'Сбор успешно завершён')
     return redirect(url_for('get_admin'))
 
 
@@ -55,7 +56,7 @@ def collect_vacancies():
         professions_for_autocollection = automatic_collection.split(',')
         scheduler.start(timer_for_automatic_collection, process_profession_data, 'autocollection',
                         professions_for_autocollection)
-        cache.set_message('start_autocollection', 'Автосбор успешно запущен')
+        cache_session.set_message('start_autocollection', 'Автосбор успешно запущен')
     return redirect(url_for('get_admin'))
 
 
@@ -64,7 +65,7 @@ def process_delete_images():
     timer_for_deleting_images = request.form.get('timer2') or None
     if timer_for_deleting_images:
         scheduler.start(timer_for_deleting_images, image.delete, params=Cache.names_cache, id='delete_images')
-        cache.set_message('start_delete_images', 'Автоудаление картинок успешно запущено')
+        cache_session.set_message('start_delete_images', 'Автоудаление картинок успешно запущено')
         scheduler.check_jobs()
     return redirect(url_for('get_admin'))
 
@@ -72,14 +73,14 @@ def process_delete_images():
 @app.route('/stop_main_collection', methods=['POST'])
 def stop_main_collection():
     scheduler.stop('autocollection')
-    cache.set_message('finish_autocollection', 'Автосбор остановлен')
+    cache_session.set_message('finish_autocollection', 'Автосбор остановлен')
     return redirect(url_for('get_admin'))
 
 
 @app.route('/stop_image_cleanup', methods=['POST'])
 def stop_image_cleanup():
     scheduler.stop('delete_images')
-    cache.set_message('finish_delete_images', 'Автоудаление картинок остановлено')
+    cache_session.set_message('finish_delete_images', 'Автоудаление картинок остановлено')
     return redirect(url_for('get_admin'))
 
 
@@ -89,12 +90,12 @@ def get_show():
 
     form = request.form
     valid_form = Form(form)
-    cache.get_form(valid_form)
+    vacancy_cache.get_form(valid_form)
     model = Model(valid_form)
-    data = cache.get_json_vacancy()
+    data = vacancy_cache.get_json_vacancy()
     if data is None:
         data = model.get()
-        cache.add(data)
+        vacancy_cache.add(data)
     end = time.time()
     execution_time = end - start
     # jobs передается пустой, но не пустой
@@ -108,18 +109,21 @@ def get_page_vacancies():
 
 @app.route('/analytics', methods=['GET'])
 def get_analytics():
-    return render_template('views/analytics.html', image_path=cache.get_last_entry())
+    path, profession = cache_path_image.get_last_entry()
+    if path is None:
+        path = Image.get_path(profession)
+    return render_template('views/analytics.html', image_path=path)
 
 
 @app.route('/skills_salary_diagram', methods=['POST'])
 def skills_salary():
     profession = get_valid_data(request.form.get('profession_stats'))
     if profession:
-        data_for_diagram, diagram, path = prepare_data(profession, cache,
-                                                                        get_comparing_skills_with_salary,
-                                                                        SkillsSalaryDiagramBuilder)
+        data_for_diagram, diagram, path = prepare_data(profession, cache_path_image,
+                                                       get_comparing_skills_with_salary,
+                                                       SkillsSalaryDiagramBuilder)
         send(diagram, data_for_diagram, path)
-        cache.save_path_image(profession, path)  # маг число, запрятать в cache?
+        cache_path_image.save_path_image(profession, path)
     return redirect(url_for('get_analytics'))
 
 
@@ -129,10 +133,10 @@ def popular_skills():
     if profession is None:
         return 'Not Found', 404
 
-    processor = PopularSkillsDiagramProcessor(cache)
+    processor = PopularSkillsDiagramProcessor(cache_path_image)
     processor.process(profession)
     return redirect(url_for('get_analytics'))
-#print()
+
 
 if __name__ == '__main__':
     app.run()

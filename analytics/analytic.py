@@ -1,13 +1,12 @@
-import os
 import re
 from typing import Optional
 
 import requests
 
-from database_queries import get_popular_skills
 from analytics.diagrams import send, PopularSkillDiagramBuilder
+from cache import Cache
+from database_queries import get_popular_skills
 from images import Image
-from vacancy_service import Cache
 
 
 class BaseDiagramProcessor:
