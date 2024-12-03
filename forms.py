@@ -28,6 +28,7 @@ class Form:
             valid_full_search_query = validate_letters_with_spaces(normal_full_search_query)
         except ValueError as e:
             self.errors.append(f'Invalid full_search_query {full_search_query}')
+            valid_full_search_query = None
         return valid_full_search_query
 
     def get_salary(self, field_name: str) -> str | None:
@@ -37,6 +38,7 @@ class Form:
             valid_salary = validate_digits_only(normal_salary)
         except ValueError as e:
             self.errors.append(f'Invalid salary: {e}')
+            valid_salary = None
         return valid_salary
 
     def get_city(self) -> str | None:
@@ -46,6 +48,7 @@ class Form:
             valid_city = validate_letters_only(normal_city)
         except ValueError as e:
             self.errors.append(f'Invalid city: {e}')
+            valid_city = None
         return valid_city
 
     def get_company(self) -> str | None:
@@ -54,6 +57,7 @@ class Form:
             valid_company = normalize_string(company)
         except ValueError as e:
             self.errors.append(f'Invalid company: {e}')
+            valid_company = None
         return valid_company
 
     def get_remote(self) -> bool | None:

@@ -10,8 +10,11 @@
                 <label for="profession">Какую профессию ищем?</label>
                 <input type="text" id="profession" name="input_prof_name" placeholder="Введите профессию">
                 <button type="submit" class="button is-light">Собрать</button>
-                {% if message_manual_collect_vacancies %}
-                    <p>{{ message_manual_collect_vacancies }}</p>
+                {% if success_message_manual_collect_vacancies %}
+                    <p>{{ success_message_manual_collect_vacancies }}</p>
+                {% endif %}
+                {% if error_message_manual_collect_vacancies %}
+                    <p> {{ error_message_manual_collect_vacancies }}</p>
                 {% endif %}
             </form>
         </div>
@@ -32,11 +35,14 @@
 
                 <!-- Кнопка для остановки для первого действия -->
                 <button class="button is-light" type="submit" onclick="setFormAction('stop_main')">Остановить</button>
-                {% if start_autocollect_vacancies %}
-                    <p>{{ start_autocollect_vacancies }}</p>
+                {% if success_autocollection %}
+                    <p>{{ success_autocollection }}</p>
                 {% endif %}
-                {% if stop_autocollection %}
-                    <p> {{ stop_autocollection }} </p>
+                {% if error_profession_autocollection %}
+                    <p> {{ error_profession_autocollection }} </p>
+                {% endif %}
+                {% if error_timer_for_automatic_collection %}
+                    <p> {{ error_timer_for_automatic_collection }} </p>
                 {% endif %}
             </form>
         </div>
@@ -52,11 +58,11 @@
 
                 <!-- Кнопка для остановки для второго действия -->
                 <button class="button is-light" type="submit" onclick="setFormAction('stop_images')">Остановить</button>
-                {% if start_process_delete_images %}
-                    <p>{{ start_process_delete_images }}</p>
+                {% if success_delete_images %}
+                    <p>{{ success_delete_images }}</p>
                 {% endif %}
-                {% if stop_delete_images %}
-                    <p> {{ stop_delete_images }} </p>
+                {% if error_timer_for_delete_images %}
+                    <p> {{ error_timer_for_delete_images }} </p>
                 {% endif %}
             </form>
         </div>

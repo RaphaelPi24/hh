@@ -1,12 +1,10 @@
-import re
-
 import requests
 
-from analytics.diagrams import send, PopularSkillDiagramBuilder
-from cache import Cache
-from database_queries import get_popular_skills
+from analytics.diagrams import send, PopularSkillDiagramBuilder, SkillsSalaryDiagramBuilder
+from cache import CacheSession, Cache
+from database_queries import get_popular_skills, get_comparing_skills_with_salary
 from images import Image
-from validation import normalize_string, validate_letters_with_spaces
+from validation import normalize_string, validate_letters_with_spaces, validate_digits_only, is_positive_number
 
 
 class BaseDiagramProcessor:
@@ -15,15 +13,16 @@ class BaseDiagramProcessor:
 
     def __init__(self, cache: Cache):
         self.cache = cache
+        self.query = None
+        self.builder_class = None  # надо или не надо?
 
     def process(self, profession: str) -> None:
-        if profession:
-            data_for_diagram, diagram, path = prepare_data(
-                profession, self.cache, get_popular_skills,
-                PopularSkillDiagramBuilder
-            )
-            send(diagram, data_for_diagram, path)
-            self.cache.save_path_image(profession, path)
+        data_for_diagram, diagram, path = prepare_data(
+            profession, self.cache, self.query,
+            self.builder_class
+        )
+        send(diagram, data_for_diagram, path)
+        self.cache.save_path_image(profession, path)
 
 
 class SalaryDiagramProcessor(BaseDiagramProcessor):
@@ -36,12 +35,7 @@ class PopularSkillsDiagramProcessor(BaseDiagramProcessor):
     builder_class = PopularSkillDiagramBuilder
 
 
-def process_of_processing_diagrams(profession: str, request: requests, cache: Cache) -> None:
-    if profession:
-        data_for_diagram, diagram, path = prepare_data(profession, cache, get_popular_skills,
-                                                       PopularSkillDiagramBuilder)
-        send(diagram, data_for_diagram, path)
-        cache.save_path_image(profession, path)
+
 
 
 def prepare_data(profession: str, cache: Cache, func_for_get_data: callable, class_for_draw: callable) -> tuple:
@@ -56,11 +50,22 @@ def prepare_data(profession: str, cache: Cache, func_for_get_data: callable, cla
     return data_for_diagram, diagram, path
 
 
-def get_valid_data(profession) -> str | None:
+def get_valid_data(profession, title, cache_session) -> str | None:
     try:
         normal_profession = normalize_string(profession)
         valid_profession = validate_letters_with_spaces(normal_profession)
     except ValueError as e:
-        return e # ????
+        cache_session.set_message(title, f"Invalid data {e}")
+        valid_profession = None
     return valid_profession
 
+
+def process_timer(timer: str, cache_session: CacheSession, title: str) -> tuple:
+    try:
+        timer_digit = validate_digits_only(timer)
+        timer_digit = int(timer_digit)  # думал что здесь это команда лишняя
+        positive_number_timer = is_positive_number(timer_digit)
+    except ValueError as e:
+        cache_session.set_message(title, f'Таймер должен быть положительным числом {e}')
+        positive_number_timer = timer_digit = None  # калечно
+    return positive_number_timer, timer_digit

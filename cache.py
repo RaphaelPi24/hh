@@ -29,10 +29,10 @@ class CacheSessionPathImage(Cache):
 
 
 class CacheSession(Cache):
-    def get_manual_collection(self) -> str | None:
-        message = self.redis_client.hget('user:1000', 'manual_collection')
+    def get_message(self, title) -> str | None:
+        message = self.redis_client.hget('user:1000', title)
         if message is not None:
-            self.redis_client.hdel('user:1000', 'manual_collection')
+            self.redis_client.hdel('user:1000', title)
         return message
 
     def set_message(self, key: str, value: str) -> None:

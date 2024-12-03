@@ -13,6 +13,9 @@
                     <div class="unique-container">
                         <button type="submit" name="">Составить диаграмму</button>
                     </div>
+                    {% if error_message_for_popular_skills %}
+                    <p>{{ error_message_for_popular_skills }}</p>
+                    {% endif %}
                 </form>
             </div>
 
@@ -27,6 +30,9 @@
                     <div class="unique-container">
                         <button type="submit">Показать статистику</button>
                     </div>
+                    {% if error_message_for_skills_salary %}
+                    <p>{{ error_message_for_skills_salary }}</p>
+                    {% endif %}
                 </form>
             </div>
 

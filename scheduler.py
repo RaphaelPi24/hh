@@ -8,7 +8,7 @@ from parsers.easy_parser import get_data, get_average_salary, get_keyskills1, to
 
 
 def process_profession_data(professions: [list, str]) -> None:
-    #
+    professions = professions.split(',')
     if isinstance(professions, str):
         professions = [professions]
     for profession in professions:
