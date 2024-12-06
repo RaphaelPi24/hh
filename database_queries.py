@@ -3,14 +3,12 @@ from collections import defaultdict
 from functools import reduce
 from typing import List, Dict
 
-from peewee import Query
-
+from forms import VacanciesForm
 from models import VacancyCard
-from forms import Form
 
 
 class Model:
-    def __init__(self, form: Form) -> None:
+    def __init__(self, form: VacanciesForm) -> None:
         self.form = form
 
     def get(self) -> List[Dict] | None:
@@ -101,7 +99,6 @@ def get_popular_skills(profession):
 
 
 def get_comparing_skills_with_salary(profession: str) -> dict:
-
     conditions = [VacancyCard.name.contains(query) for query in profession.split()]
     # Объединяем условия с оператором & (AND)
     if conditions:

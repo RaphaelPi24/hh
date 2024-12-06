@@ -46,7 +46,7 @@ async def get_data(profession) -> list[WorkCart]:
             data_json = await response.json()
 
     jobs = []
-    for i, value in enumerate(data_json['items'], 1):
+    for value in data_json['items']:
         cart = WorkCart(
             vacancy_id=value['id'],
             name=clean_decoding(value['name']),
@@ -85,7 +85,6 @@ async def get_skills_from_1_cart(cart: WorkCart) -> tuple[list, dict]:
     async with aiohttp.ClientSession() as session:
         async with session.get(cart.api_url) as response:
             query_skills = await response.json()
-            skills = query_skills.get('key_skills')
             skills = query_skills.get('key_skills', [])
             skills_list = [skills_dict.get('name', '').strip() for skills_dict in skills if 'name' in skills_dict]
             return {cart.vacancy_id: skills_list}

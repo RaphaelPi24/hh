@@ -4,7 +4,7 @@ from pathlib import Path
 
 from redis import Redis
 
-from forms import Form
+from forms import VacanciesForm
 
 
 class Cache:
@@ -62,7 +62,7 @@ class VacancyCache(Cache):
     names_cache: list[str] = []
     cache_key = None
 
-    def get_form(self, form: Form) -> None:
+    def get_form(self, form: VacanciesForm) -> None:
         self.cache_key = hashlib.md5(
             f"{form.full_search_query}{form.salary_from}{form.salary_to}{form.city}{form.company}{form.remote}".encode(
                 'utf-8')

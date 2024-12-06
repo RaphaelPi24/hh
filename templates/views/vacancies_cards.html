@@ -1,9 +1,9 @@
 
 <h4 class="cart_time">Время выполнения: {{ time }}</h4>
 {% if jobs %}
-    {% for index, job in jobs %}
+    {% for job in jobs %}
     <div class="card1">
-        <h3 class="card_head">{{ index }}.  <a href="{{ job.url }}">{{ job.name }}</a></h3>
+        <h3 class="card_head">{{ loop.index }}.  <a href="{{ job.url }}">{{ job.name }}</a></h3>
         <div class="card_company">Организация: {{ job.employer }}</div>
         <div class="card_salary">Зарплатка: от {{ job.salary_from }} до {{ job.salary_to }} {{ job.currency }}</div>
         <div class="card_schedule"> {{ job.schedule }}</div>

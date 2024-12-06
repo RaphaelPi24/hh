@@ -25,7 +25,7 @@ def validate_digits_only(string: str) -> str:
     raise ValueError(f"Строка должна содержать только цифры: '{string}'")
 
 
-def is_positive_number(number: int | float) -> bool:
+def is_positive_number(number: int | float) -> int | float:
     if int(number) > 0:
-        return True
+        return number
     raise ValueError(f'Число должно быть положительным {number}')

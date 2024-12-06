@@ -1,6 +1,6 @@
 from peewee import IntegrityError
 
-from models import VacancyCard, Skill, VacancySkill
+from models import VacancyCard, Skill, VacancySkill, db
 from parsers.easy_parser import WorkCart
 
 
@@ -36,11 +36,12 @@ def to_bd_vacancies(data: tuple[WorkCart]) -> None:
             print(f"Error saving vacancy: {e}")
 
 
-def to_bd_skills(data :set) -> None:
-    query = [Skill(name=skill) for skill in data]
+def to_bd_skills(data: set) -> None:
+    formatted_data = [{"name": skill} for skill in data]
     try:
-        with Skill._meta.database.atomic():
-            Skill.bulk_create(query)
+        with db.atomic(): # транзакция
+            # Вставляем данные с игнорированием конфликта уникальности
+            Skill.insert_many(formatted_data, fields=[Skill.name]).on_conflict_ignore().execute()
     except IntegrityError as e:
         print(f'Не получилось записать умения в Таблицу Skill {e}')
 

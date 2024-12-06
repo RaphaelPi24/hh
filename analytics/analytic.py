@@ -1,5 +1,3 @@
-import requests
-
 from analytics.diagrams import send, PopularSkillDiagramBuilder, SkillsSalaryDiagramBuilder
 from cache import CacheSession, Cache, CacheSessionPathImage
 from database_queries import get_popular_skills, get_comparing_skills_with_salary
@@ -35,7 +33,8 @@ class PopularSkillsDiagramProcessor(BaseDiagramProcessor):
     builder_class = PopularSkillDiagramBuilder
 
 
-def prepare_data(profession: str, cache: CacheSessionPathImage, func_for_get_data: callable, class_for_draw: callable) -> tuple:
+def prepare_data(profession: str, cache: CacheSessionPathImage, func_for_get_data: callable,
+                 class_for_draw: callable) -> tuple:
     if profession is not None:
         path = cache.get_pathfile_for_profession(profession)
         if path:
@@ -52,11 +51,11 @@ def get_valid_data(profession, title, cache_session) -> str | None:
         normal_profession = normalize_string(profession)
         valid_profession = validate_letters_with_spaces(normal_profession)
     except ValueError as e:
-        cache_session.set_message(title, f"Invalid data {e}")
         valid_profession = None
     return valid_profession
 
 
+# свой класс формы для каждой страницы
 def process_timer(timer: str, cache_session: CacheSession, title: str) -> tuple:
     try:
         timer_digit = validate_digits_only(timer)
@@ -66,3 +65,5 @@ def process_timer(timer: str, cache_session: CacheSession, title: str) -> tuple:
         cache_session.set_message(title, f'Таймер должен быть положительным числом {e}')
         positive_number_timer = timer_digit = None  # калечно
     return positive_number_timer, timer_digit
+
+
