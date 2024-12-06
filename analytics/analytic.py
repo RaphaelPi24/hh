@@ -1,7 +1,7 @@
 import requests
 
 from analytics.diagrams import send, PopularSkillDiagramBuilder, SkillsSalaryDiagramBuilder
-from cache import CacheSession, Cache
+from cache import CacheSession, Cache, CacheSessionPathImage
 from database_queries import get_popular_skills, get_comparing_skills_with_salary
 from images import Image
 from validation import normalize_string, validate_letters_with_spaces, validate_digits_only, is_positive_number
@@ -35,10 +35,7 @@ class PopularSkillsDiagramProcessor(BaseDiagramProcessor):
     builder_class = PopularSkillDiagramBuilder
 
 
-
-
-
-def prepare_data(profession: str, cache: Cache, func_for_get_data: callable, class_for_draw: callable) -> tuple:
+def prepare_data(profession: str, cache: CacheSessionPathImage, func_for_get_data: callable, class_for_draw: callable) -> tuple:
     if profession is not None:
         path = cache.get_pathfile_for_profession(profession)
         if path:

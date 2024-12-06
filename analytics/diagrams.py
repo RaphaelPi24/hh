@@ -31,7 +31,7 @@ class DiagramBuilder:
     def plot(self, figsize: tuple[int, int]):
         # Создание диаграммы
         self.fig, self.ax = plt.subplots(figsize=figsize)
-        bars = self.get_plot()
+        bars = self.get_plot() # ????
         self.set_labels()
         plt.tight_layout()
 

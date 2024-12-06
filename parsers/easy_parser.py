@@ -2,15 +2,12 @@ import asyncio
 from dataclasses import dataclass
 
 import aiohttp
-import requests
-from peewee import OperationalError, IntegrityError
-
-from models import VacancyCard, Skill
 
 url = 'https://api.hh.ru/vacancies'
 head = {'Accept': '*/*',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'}
-all_skills = []
+all_skills = {}
+
 
 @dataclass
 class WorkCart:
@@ -46,7 +43,7 @@ async def get_data(profession) -> list[WorkCart]:
     }
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=head, params=params, timeout=5) as response:
-            data_json = await response.json()  # Асинхронное получение JSON
+            data_json = await response.json()
 
     jobs = []
     for i, value in enumerate(data_json['items'], 1):
@@ -67,90 +64,39 @@ async def get_data(profession) -> list[WorkCart]:
         jobs.append(cart)
     return jobs
 
-# для синхронной работы
-def get_keyskills(data: list[WorkCart]) -> list[WorkCart]:
-    for cart in data:
-        url = cart.api_url
-        if url:
-            query_keyskills = requests.get(url, headers=head, timeout=5).json()
-        keyskills = query_keyskills.get('key_skills')
-        skills_list = [skills_dict.get('name') for skills_dict in keyskills]
-        cart.skills = ','.join(skills_list)
-    return data
 
-
-async def get_keyskills1(data: list[WorkCart]) -> tuple[WorkCart]:
-    # Используем asyncio.gather для асинхронного вызова get_skills_from_1_cart для каждого элемента
+async def get_skills(data: list[WorkCart]) -> tuple[set[str], dict]:
     tasks = [get_skills_from_1_cart(cart) for cart in data]
+    results = await asyncio.gather(*tasks)
 
-    # Ожидаем завершения всех задач
-    data_with_skills = await asyncio.gather(*tasks)
+    aggregated_skills = set()
+    vacancy_id_and_skills = {}
 
-    return data_with_skills
+    for result in results:
+        if result:
+            for vacancy_id, skills in result.items():
+                vacancy_id_and_skills[vacancy_id] = skills
+                aggregated_skills.update(skills)
+
+    return aggregated_skills, vacancy_id_and_skills
 
 
-async def get_skills_from_1_cart(cart: WorkCart) -> WorkCart:
+async def get_skills_from_1_cart(cart: WorkCart) -> tuple[list, dict]:
     async with aiohttp.ClientSession() as session:
         async with session.get(cart.api_url) as response:
             query_skills = await response.json()
             skills = query_skills.get('key_skills')
-
-            if skills is not None:
-                skills_list = [skills_dict.get('name') for skills_dict in skills]
-                #cart.skills = ','.join(skills_list)
-                all_skills.extend(skills_list)
-    #return cart
+            skills = query_skills.get('key_skills', [])
+            skills_list = [skills_dict.get('name', '').strip() for skills_dict in skills if 'name' in skills_dict]
+            return {cart.vacancy_id: skills_list}
 
 
 def get_average_salary(carts: list[WorkCart]) -> list[WorkCart]:
     for cart in carts:
         if (
-            cart.salary_from is not None
-            and cart.salary_to is not None
-            and cart.currency == 'RUR'
+                cart.salary_from is not None
+                and cart.salary_to is not None
+                and cart.currency == 'RUR'
         ):
             cart.average_salary = (cart.salary_from + cart.salary_to) // 2
     return carts
-
-
-def to_bd(data: tuple[WorkCart]) -> None:
-    try:
-        VacancyCard.create_table()
-    except OperationalError:
-        print("Таблица VacancyCard уже существует.")
-    for cart in data:
-        try:
-            print(cart)
-            # Используем get_or_create для предотвращения дублирования по cart_id
-            vacancy_card, created = VacancyCard.get_or_create(
-                vacancy_id=cart.vacancy_id,  # Проверяем уникальный ID вакансии
-                defaults={
-                    'name': cart.name,
-                    'salary_from': cart.salary_from,
-                    'salary_to': cart.salary_to,
-                    'area': cart.area,
-                    'currency': cart.currency,
-                    'employer': cart.employer,
-                    'schedule': cart.schedule,
-                    'experience': cart.experience,
-                    'employment': cart.employment,
-                    'api_url': cart.api_url,
-                    'url': cart.url,
-                    'skills': cart.skills,
-                    'average_salary': cart.average_salary
-                }
-            )
-
-            if created:
-                print(f"Vacancy {cart.name} added successfully.")
-            else:
-                print(f"Vacancy {cart.name} already exists.")
-        except IntegrityError as e:
-            print(f"Error saving vacancy: {e}")
-
-def to_bd_skills() -> None:
-    data = list(set(skill.strip() for skill in all_skills if skill))
-    for skill in data:
-        # Проверяем, существует ли запись в БД
-        if not Skill.select().where(Skill.name == skill).exists():
-            Skill.create(name=skill)

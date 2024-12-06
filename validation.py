@@ -8,7 +8,7 @@ def normalize_string(string: str | None) -> str | None:
 
 
 def validate_letters_with_spaces(string: str) -> str:
-    if re.fullmatch(r"[A-Za-zА-Яа-яЁё ]+", string):
+    if re.fullmatch(r"[A-Za-zА-Яа-яЁё ,]+", string):
         return string
     raise ValueError(f"Строка должна содержать только буквы и пробелы: '{string}'")
 

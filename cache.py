@@ -14,6 +14,11 @@ class Cache:
 class CacheSessionPathImage(Cache):
     time_cache_images = 60
 
+    def get_pathfile_for_profession(self, profession: str) -> str:
+        if profession:
+            path = self.redis_client.hget('user:1000', profession)
+            return path
+
     def get_last_entry(self) -> tuple[str | None]:
         profession = self.redis_client.hget('user:1000', 'diagram')
         if profession:

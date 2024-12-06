@@ -1,7 +1,7 @@
 import operator
 from collections import defaultdict
 from functools import reduce
-from typing import Optional, List, Dict
+from typing import List, Dict
 
 from peewee import Query
 
@@ -10,10 +10,10 @@ from forms import Form
 
 
 class Model:
-    def __init__(self, form: 'Form') -> None:
-        self.form: 'Form' = form
+    def __init__(self, form: Form) -> None:
+        self.form = form
 
-    def get(self) -> Optional[List[Dict]]:
+    def get(self) -> List[Dict] | None:
         if self.form.select == 'title':
             return self.get_cards_by_title()
         elif self.form.select == 'skill':
@@ -21,20 +21,17 @@ class Model:
         return None
 
     def get_cards_by_title(self) -> List[Dict]:
-        search_queries_from_words: List[str] = self.form.full_search_query.split()
-        conditions: List[Query] = [VacancyCard.name.contains(query) for query in search_queries_from_words]
+        search_queries_from_words = self.form.full_search_query.split()
+        conditions = [VacancyCard.name.contains(query) for query in search_queries_from_words]
 
         if self.form.salary_from:
             conditions.append(VacancyCard.salary_from >= int(self.form.salary_from))
         if self.form.salary_to:
             conditions.append(VacancyCard.salary_to <= int(self.form.salary_to))
-
         if self.form.city:
             conditions.append(VacancyCard.area == self.form.city)
-
         if self.form.company:
             conditions.append(VacancyCard.employer.contains(self.form.company))
-
         if self.form.remote == 'on':
             conditions.append(VacancyCard.schedule.contains('Удаленная работа'))
 
@@ -51,7 +48,7 @@ class Model:
                 VacancyCard.schedule,
                 VacancyCard.url
             )
-            .where(*conditions)  # Применяем все условия
+            .where(*conditions)
             .dicts()
         )
         return data

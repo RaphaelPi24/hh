@@ -48,12 +48,3 @@ VacancyCard.create_table()
 Skill.create_table()
 VacancySkill.create_table()
 
-# def add_vacancy_with_skills(vacancy_data, skills_list):
-#     with db.atomic():
-#         # Добавляем вакансию
-#         vacancy = VacancyCard.create(**vacancy_data)
-#
-#         # Обрабатываем навыки
-#         for skill_name in skills_list:
-#             skill, created = Skill.get_or_create(name=skill_name.strip())
-#             VacancySkill.create(vacancy=vacancy, skill=skill)

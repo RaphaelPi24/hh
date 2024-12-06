@@ -9,7 +9,8 @@ from cache import CacheSession, VacancyCache, CacheSessionPathImage
 from database_queries import Model, get_comparing_skills_with_salary
 from forms import Form
 from images import Image
-from scheduler import process_profession_data, Scheduler
+from scheduler import Scheduler
+from parsers.main import process_profession_data
 
 app = Flask(__name__)
 
@@ -32,16 +33,15 @@ def get_admin():
     message_auto_collect = cache_session.get_message('auto_collect_vacancies')
     message_timer_for_automatic_collection = cache_session.get_message('timer_for_automatic_collection')
     message_timer_for_delete_images = cache_session.get_message('timer_for_delete_images')
-
     return render_template(
         'views/admin.html',
-        success_message_manual_collect_vacancies=cache_session.get_message(),
+        success_message_manual_collect_vacancies=cache_session.get_message('manual_collection'),
         error_message_manual_collect_vacancies=message_manual,
-        success_autocollection=cache_session.get_auto_collection(),
+        success_autocollection=cache_session.get_session_message('start_autocollection', 'finish_autocollection'),
         error_profession_autocollection=message_auto_collect,
         error_timer_for_automatic_collection=message_timer_for_automatic_collection,
         error_timer_for_delete_images=message_timer_for_delete_images,
-        success_delete_images=cache_session.get_delete_images()
+        success_delete_images=cache_session.get_session_message('start_delete_images', 'finish_delete_images')
     )
 
 
