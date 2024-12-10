@@ -74,17 +74,23 @@ class VacanciesForm:
             self.errors.append(f'Invalid {value}: {e}')
         return title
 
+
 class AdminForm:
     errors: list[str] = []
 
     def __init__(self, form: dict) -> None:
         self.form = form
 
-        self.auto_parser = form.get('auto_collect_vacancies')
+        self.professions_for_autoparser = form.get('auto_collect_vacancies')
         self.timer_auto_parser = form.get('timer1')
         self.timer_del_image = form.get('timer2')
 
     def validate_manual_parser(self):
+        self.manual_parser = self.form.get('input_prof_name')
+        valid_manual_parser = self.validate_profession_for_manual_parser()
+        return valid_manual_parser
+
+    def validate_profession_for_manual_parser(self) -> str | None:
         self.manual_parser = self.form.get('input_prof_name')
         try:
             normal_profession = normalize_string(self.manual_parser)
@@ -94,7 +100,14 @@ class AdminForm:
             self.errors.append(f'Invalid manual parser: {e}')
         return valid_profession
 
-    def validate_auto_parser(self):
+    def validate_auto_parser(self) -> tuple:
+        professions = self.professions_for_autoparser
+        timer = self.timer_auto_parser
+        valid_professions = self.validate_professions_for_autoparser()
+        valid_timer = self.validate_timer(timer)
+        return valid_professions, valid_timer  # надо возвращать или через self обращаться?
+
+    def validate_professions_for_autoparser(self) -> str | None:
         try:
             normal_profession = normalize_string(self.auto_parser)
             valid_profession = validate_letters_with_spaces(normal_profession)
@@ -103,11 +116,11 @@ class AdminForm:
             self.errors.append(f'Invalid auto_parser: {e}')
         return valid_profession
 
-    def validate_params_for_del_image(self):
-        positive_number_timer, timer_digit = self.validate_timer(self.timer_del_image)
-        return positive_number_timer, timer_digit
+    def validate_params_for_del_image(self) -> int | float | None:
+        timer_digit = self.validate_timer(self.timer_del_image)
+        return timer_digit
 
-    def validate_timer(self, timer) -> tuple:
+    def validate_timer(self, timer) -> int | float | None:
         try:
             timer_digit = validate_digits_only(timer)
             timer_digit = int(timer_digit)  # думал что здесь это команда лишняя
@@ -117,6 +130,6 @@ class AdminForm:
             timer_digit = None
         return timer_digit
 
+
 class AnalyticsForm:
     errors: list[str] = []
-

@@ -16,13 +16,13 @@ class CacheSessionPathImage(Cache):
 
     def get_pathfile_for_profession(self, profession: str) -> str:
         if profession:
-            path = self.redis_client.hget('user:1000', profession)
+            path = self.redis_client.hget('path_image', profession)
             return path
 
     def get_last_entry(self) -> tuple[str | None]:
-        profession = self.redis_client.hget('user:1000', 'diagram')
+        profession = self.redis_client.hget('path_image', 'diagram')
         if profession:
-            path = self.redis_client.hget('user:1000', profession)
+            path = self.redis_client.hget('path_image', profession)
         return path, profession
         # cache должен проверять кэш, а не создавать пути из Image
 
@@ -30,32 +30,32 @@ class CacheSessionPathImage(Cache):
         if isinstance(path, Path):
             path = str(path)
         self.redis_client.setex(name, self.time_cache_images, path)
-        self.redis_client.hset('user:1000', 'diagram', name)
+        self.redis_client.hset('path_image', 'diagram', name)
 
 
 class CacheSession(Cache):
-    def get_message(self, title) -> str | None:
-        message = self.redis_client.hget('user:1000', title)
-        if message is not None:
-            self.redis_client.hdel('user:1000', title)
-        return message
-
     def set_message(self, key: str, value: str) -> None:
-        self.redis_client.hset('user:1000', key, value)
+        self.redis_client.hset('message', key, value)
 
     def get_session_message(self, start_key: str, finish_key: str) -> str | None:
-        keys = self.redis_client.hkeys('user:1000')
+        keys = self.redis_client.hkeys('message')
 
         if finish_key in keys:
-            self.redis_client.hdel('user:1000', start_key)
-            message = self.redis_client.hget('user:1000', finish_key)
+            self.redis_client.hdel('message', start_key)
+            message = self.redis_client.hget('message', finish_key)
             if message is not None:
-                self.redis_client.hdel('user:1000', finish_key)
+                self.redis_client.hdel('message', finish_key)
         elif start_key in keys:
-            message = self.redis_client.hget('user:1000', start_key)
+            message = self.redis_client.hget('message', start_key)
         else:
             message = None
-        return message
+        return message # может в этой функции использовать return-ы?
+
+    def get_message_autocollect(self):
+        return self.get_session_message('start_autocollection', 'finish_autocollection')
+
+    def get_message_del_image(self):
+        return self.get_session_message('start_delete_images', 'finish_delete_images')
 
 
 class VacancyCache(Cache):

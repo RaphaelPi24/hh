@@ -2,16 +2,15 @@ import time
 from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
-from numpy.matlib import empty
 
-from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, get_valid_data, process_timer
+from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, get_valid_data
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
 from cache import CacheSession, VacancyCache, CacheSessionPathImage
 from database_queries import Model, get_comparing_skills_with_salary
 from forms import VacanciesForm, AdminForm
 from images import Image
-from scheduler import Scheduler
 from parsers.main import process_profession_data
+from scheduler import Scheduler
 
 app = Flask(__name__)
 
@@ -31,32 +30,32 @@ def get_base():
 def get_admin():
     return render_template(
         'views/admin.html',
-        success_autocollection=cache_session.get_session_message('start_autocollection', 'finish_autocollection'),
-        success_delete_images=cache_session.get_session_message('start_delete_images', 'finish_delete_images')
+        success_message_manual_collect_vacancies='Сбор успешно завершён',
+        success_autocollection=cache_session.get_message_autocollect(),
+        success_delete_images=cache_session.get_message_del_image()
     )
 
 
 @app.route('/manual', methods=['POST'])
 def manual_collect_vacancies():
-    manual_collection = get_valid_data(request.form.get('input_prof_name'), 'input_prof_name', cache_session)
-    if manual_collection is None:
-        return render_template('views/admin.html', error_message_manual_collect_vacancies='Ошибка!')
-    process_profession_data(manual_collection)
-    cache_session.set_message('manual_collection', 'Сбор успешно завершён')
+    form = AdminForm(request.form)
+    valid_profession = form.validate_professions_for_autoparser()
+    if form.errors:
+        return render_template('views/admin.html', error_autocollection=form.errors)
+
+    process_profession_data(valid_profession)
+    cache_session.set_message('manual_collection', )
     return redirect(url_for('get_admin'))
 
 
 @app.route('/admin', methods=['POST'])
 def collect_vacancies():
-    automatic_collection = get_valid_data(request.form.get('auto_collect_vacancies'), 'auto_collect_vacancies',
-                                          cache_session)
-    timer_for_automatic_collection = request.form.get('timer1')
-    positive_number_timer, timer_digit = process_timer(timer_for_automatic_collection, cache_session,
-                                                       'timer_for_automatic_collection')
-    if automatic_collection is None or timer_digit is None:
-        return redirect(url_for('get_admin'))
+    form = AdminForm(request.form)
+    valid_professions, valid_timer = form.validate_professions_for_autoparser()
+    if form.errors:
+        return render_template('views/admin.html', error_autocollection=form.errors)
 
-    scheduler.start(timer_digit, process_profession_data, 'autocollection', automatic_collection)
+    scheduler.start(valid_timer, process_profession_data, 'autocollection', valid_professions)
     cache_session.set_message('start_autocollection', 'Автосбор успешно запущен')
     return redirect(url_for('get_admin'))
 
@@ -66,7 +65,7 @@ def process_delete_images():
     form = AdminForm(request.form)
     timer_digit = form.validate_params_for_del_image()
     if form.errors:
-        return render_template('views/admin.html', error_message_manual_collect_vacancies=''.join(form.errors))
+        return render_template('views/admin.html', error_timer_for_delete_images=form.errors)
 
     scheduler.start(timer_digit, Image.delete, params=vacancy_cache.names_cache, id='delete_images')
     cache_session.set_message('start_delete_images', 'Автоудаление картинок успешно запущено')
