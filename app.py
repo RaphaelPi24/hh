@@ -7,7 +7,7 @@ from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, get_
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
 from cache import CacheSession, VacancyCache, CacheSessionPathImage
 from database_queries import Model, get_comparing_skills_with_salary
-from forms import VacanciesForm, AdminForm
+from forms import VacanciesForm, AdminForm, AnalyticsForm
 from images import Image
 from parsers.main import process_profession_data
 from scheduler import Scheduler
@@ -31,8 +31,8 @@ def get_admin():
     return render_template(
         'views/admin.html',
         success_message_manual_collect_vacancies='Сбор успешно завершён',
-        success_autocollection=cache_session.get_message_autocollect(),
-        success_delete_images=cache_session.get_message_del_image()
+        success_autocollection='Автосбор успешно запущен' if cache_session.schedule_run.get('autocollection') else '',
+        success_delete_images='Удаление картинок успешно запущено' if cache_session.schedule_run.get('delete_images') else ''
     )
 
 
@@ -44,7 +44,6 @@ def manual_collect_vacancies():
         return render_template('views/admin.html', error_autocollection=form.errors)
 
     process_profession_data(valid_profession)
-    cache_session.set_message('manual_collection', )
     return redirect(url_for('get_admin'))
 
 
@@ -56,7 +55,7 @@ def collect_vacancies():
         return render_template('views/admin.html', error_autocollection=form.errors)
 
     scheduler.start(valid_timer, process_profession_data, 'autocollection', valid_professions)
-    cache_session.set_message('start_autocollection', 'Автосбор успешно запущен')
+    cache_session.schedule_run['autocollecion'] = True
     return redirect(url_for('get_admin'))
 
 
@@ -68,7 +67,7 @@ def process_delete_images():
         return render_template('views/admin.html', error_timer_for_delete_images=form.errors)
 
     scheduler.start(timer_digit, Image.delete, params=vacancy_cache.names_cache, id='delete_images')
-    cache_session.set_message('start_delete_images', 'Автоудаление картинок успешно запущено')
+    cache_session.schedule_run['delete_images'] = True
     scheduler.check_jobs()
     return redirect(url_for('get_admin'))
 
@@ -76,15 +75,15 @@ def process_delete_images():
 @app.route('/stop_main_collection', methods=['POST'])
 def stop_main_collection():
     scheduler.stop('autocollection')
-    cache_session.set_message('finish_autocollection', 'Автосбор остановлен')
-    return redirect(url_for('get_admin'))
+    cache_session.schedule_run['autocollecion'] = False
+    return render_template('views/admin.html', success_delete_images='Автосбор профессий прекращён')
 
 
 @app.route('/stop_image_cleanup', methods=['POST'])
 def stop_image_cleanup():
     scheduler.stop('delete_images')
-    cache_session.set_message('finish_delete_images', 'Автоудаление картинок остановлено')
-    return redirect(url_for('get_admin'))
+    cache_session.schedule_run['delete_images'] = False
+    return render_template('views/admin.html', success_delete_images='Автоудаление картинок остановлено')
 
 
 @app.route('/show_vacancies', methods=['POST'])
@@ -110,33 +109,36 @@ def get_page_vacancies():
 
 @app.route('/analytics', methods=['GET'])
 def get_analytics():
-    path, profession = cache_path_image.get_last_entry()
-    if path is None:
-        path = Image.get_path(profession)
-    return render_template('views/analytics.html', image_path=path,
-                           error_message_for_popular_skills=cache_session.get_message('profession'),
-                           error_message_for_skills_salary=cache_session.get_message('profession_stats'))
+    # path, profession = cache_path_image.get_last_entry()
+    # if path is None:
+    #     path = Image.get_path(profession)
+    return render_template('views/analytics.html')
+                           # image_path=path,
+                           # error_message_for_popular_skills=cache_session.get_message('profession'),
+                           # error_message_for_skills_salary=cache_session.get_message('profession_stats'))
 
 
 @app.route('/skills_salary_diagram', methods=['POST'])
 def skills_salary():
-    valid_profession = get_valid_data(request.form.get('profession_stats'), 'profession_stats', cache_session)
-    if valid_profession is None:
-        return redirect(url_for('get_analytics'))
+    form = AnalyticsForm(request.form)
+    valid_profession = form.validate_skill_salary()
+    if form.errors is None:
+        return render_template('views/analytics.html', error_message_for_skills_salary=form.errors)
 
     data_for_diagram, diagram, path = prepare_data(valid_profession, cache_path_image,
                                                    get_comparing_skills_with_salary,
                                                    SkillsSalaryDiagramBuilder)
     send(diagram, data_for_diagram, path)
     cache_path_image.save_path_image(valid_profession, path)
-    return redirect(url_for('get_analytics'))
+    return render_template('views/analytics.html', image_path=path)
 
 
 @app.route('/popular_skills_diagram', methods=['POST'])
 def popular_skills():
-    valid_profession = get_valid_data(request.form.get('profession'), 'profession', cache_session)
-    if valid_profession is None:
-        return redirect(url_for('get_analytics'))
+    form = AnalyticsForm(request.form)
+    valid_profession = form.validate_popular_skill()
+    if form.errors is None:
+        return render_template('views/analytics.html', error_message_for_popular_skills=form.errors)
 
     processor = PopularSkillsDiagramProcessor(cache_path_image)
     processor.process(valid_profession)

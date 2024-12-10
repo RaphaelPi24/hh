@@ -123,7 +123,7 @@ class AdminForm:
     def validate_timer(self, timer) -> int | float | None:
         try:
             timer_digit = validate_digits_only(timer)
-            timer_digit = int(timer_digit)  # думал что здесь это команда лишняя
+            timer_digit = int(timer_digit)
             is_positive_number(timer_digit)
         except ValueError as e:
             self.errors.append(f'Invalid timer: {e}')
@@ -133,3 +133,24 @@ class AdminForm:
 
 class AnalyticsForm:
     errors: list[str] = []
+
+    def __init__(self, form: dict) -> None:
+        self.form = form
+
+        self.popular_skill = form.get('profession')
+        self.skill_salary = form.get('profession_stats')
+
+    def detail_validate(self, string, title) -> str|None:
+        try:
+            normal_profession = normalize_string(string)
+            valid_profession = validate_letters_with_spaces(normal_profession)
+        except ValueError as e:
+            valid_profession = None
+            self.errors.append(f'Invalid {title}: {e}')
+        return valid_profession
+
+    def validate_skill_salary(self) -> str|None:
+        return self.detail_validate(self.skill_salary, 'skill salary')
+
+    def validate_popular_skill(self) -> str | None:
+        return self.detail_validate(self.popular_skill, 'popular skill')

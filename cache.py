@@ -19,12 +19,12 @@ class CacheSessionPathImage(Cache):
             path = self.redis_client.hget('path_image', profession)
             return path
 
-    def get_last_entry(self) -> tuple[str | None]:
-        profession = self.redis_client.hget('path_image', 'diagram')
-        if profession:
-            path = self.redis_client.hget('path_image', profession)
-        return path, profession
-        # cache должен проверять кэш, а не создавать пути из Image
+    # def get_last_entry(self) -> tuple[str | None]:
+    #     profession = self.redis_client.hget('path_image', 'diagram')
+    #     if profession:
+    #         path = self.redis_client.hget('path_image', profession)
+    #     return path, profession
+    # cache должен проверять кэш, а не создавать пути из Image
 
     def save_path_image(self, name: str, path: str) -> None:
         if isinstance(path, Path):
@@ -34,28 +34,8 @@ class CacheSessionPathImage(Cache):
 
 
 class CacheSession(Cache):
-    def set_message(self, key: str, value: str) -> None:
-        self.redis_client.hset('message', key, value)
-
-    def get_session_message(self, start_key: str, finish_key: str) -> str | None:
-        keys = self.redis_client.hkeys('message')
-
-        if finish_key in keys:
-            self.redis_client.hdel('message', start_key)
-            message = self.redis_client.hget('message', finish_key)
-            if message is not None:
-                self.redis_client.hdel('message', finish_key)
-        elif start_key in keys:
-            message = self.redis_client.hget('message', start_key)
-        else:
-            message = None
-        return message # может в этой функции использовать return-ы?
-
-    def get_message_autocollect(self):
-        return self.get_session_message('start_autocollection', 'finish_autocollection')
-
-    def get_message_del_image(self):
-        return self.get_session_message('start_delete_images', 'finish_delete_images')
+    schedule_run = {'autocollecion': False,
+                    'delete_images': False}
 
 
 class VacancyCache(Cache):
