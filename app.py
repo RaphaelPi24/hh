@@ -3,7 +3,7 @@ from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
 
-from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, get_valid_data
+from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, SalaryDiagramProcessor
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
 from cache import CacheSession, VacancyCache, CacheSessionPathImage
 from database_queries import Model, get_comparing_skills_with_salary
@@ -30,9 +30,9 @@ def get_base():
 def get_admin():
     return render_template(
         'views/admin.html',
-        success_message_manual_collect_vacancies='Сбор успешно завершён',
         success_autocollection='Автосбор успешно запущен' if cache_session.schedule_run.get('autocollection') else '',
-        success_delete_images='Удаление картинок успешно запущено' if cache_session.schedule_run.get('delete_images') else ''
+        success_delete_images='Удаление картинок успешно запущено' if cache_session.schedule_run.get(
+            'delete_images') else ''
     )
 
 
@@ -44,7 +44,7 @@ def manual_collect_vacancies():
         return render_template('views/admin.html', error_autocollection=form.errors)
 
     process_profession_data(valid_profession)
-    return redirect(url_for('get_admin'))
+    return render_template('views/admin.html', success_message_manual_collect_vacancies='Сбор успешно завершён')
 
 
 @app.route('/admin', methods=['POST'])
@@ -113,9 +113,9 @@ def get_analytics():
     # if path is None:
     #     path = Image.get_path(profession)
     return render_template('views/analytics.html')
-                           # image_path=path,
-                           # error_message_for_popular_skills=cache_session.get_message('profession'),
-                           # error_message_for_skills_salary=cache_session.get_message('profession_stats'))
+    # image_path=path,
+    # error_message_for_popular_skills=cache_session.get_message('profession'),
+    # error_message_for_skills_salary=cache_session.get_message('profession_stats'))
 
 
 @app.route('/skills_salary_diagram', methods=['POST'])
@@ -130,6 +130,8 @@ def skills_salary():
                                                    SkillsSalaryDiagramBuilder)
     send(diagram, data_for_diagram, path)
     cache_path_image.save_path_image(valid_profession, path)
+    processor = SalaryDiagramProcessor(cache_path_image)
+    path = processor.process(valid_profession)
     return render_template('views/analytics.html', image_path=path)
 
 
@@ -141,8 +143,8 @@ def popular_skills():
         return render_template('views/analytics.html', error_message_for_popular_skills=form.errors)
 
     processor = PopularSkillsDiagramProcessor(cache_path_image)
-    processor.process(valid_profession)
-    return redirect(url_for('get_analytics'))
+    path = processor.process(valid_profession)
+    return render_template('views/analytics.html', image_path=path)
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ class Cache:
 class CacheSessionPathImage(Cache):
     time_cache_images = 60
 
-    def get_pathfile_for_profession(self, profession: str) -> str:
+    def get_pathfile_for_profession(self, profession: str) -> str | None:
         if profession:
             path = self.redis_client.hget('path_image', profession)
             return path
