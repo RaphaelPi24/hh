@@ -30,7 +30,7 @@ def get_base():
 def get_admin():
     return render_template(
         'views/admin.html',
-        success_autocollection='Автосбор успешно запущен' if cache_session.schedule_run.get('autocollection') else '',
+        success_autocollection='Автосбор успешно запущен' if cache_session.schedule_run.get('autocollecion') else '',
         success_delete_images='Удаление картинок успешно запущено' if cache_session.schedule_run.get(
             'delete_images') else ''
     )
@@ -50,7 +50,7 @@ def manual_collect_vacancies():
 @app.route('/admin', methods=['POST'])
 def collect_vacancies():
     form = AdminForm(request.form)
-    valid_professions, valid_timer = form.validate_professions_for_autoparser()
+    valid_professions, valid_timer = form.validate_auto_parser()
     if form.errors:
         return render_template('views/admin.html', error_autocollection=form.errors)
 
@@ -76,7 +76,7 @@ def process_delete_images():
 def stop_main_collection():
     scheduler.stop('autocollection')
     cache_session.schedule_run['autocollecion'] = False
-    return render_template('views/admin.html', success_delete_images='Автосбор профессий прекращён')
+    return render_template('views/admin.html', success_autocollection='Автосбор профессий прекращён')
 
 
 @app.route('/stop_image_cleanup', methods=['POST'])

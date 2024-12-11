@@ -1,10 +1,8 @@
-from pathlib import Path
 import base64
+from pathlib import Path
 
-from aiohttp.web_fileresponse import extension
 
-
-class Image: # DiagramFile FileManager
+class Image:  # DiagramFile FileManager
     path = Path("static/image_diagram")  # Относительный путь как объект Path
     extension = "png"
 
@@ -29,13 +27,10 @@ class Image: # DiagramFile FileManager
 
     @classmethod
     def save(cls, filename: str, image: base64):
-
         directory = filename.parent
         if directory.exists() and not directory.is_dir():
             raise FileExistsError(f"Невозможно создать директорию: {directory} уже существует как файл")
-
         directory.mkdir(parents=True, exist_ok=True)
-
         filename.write_bytes(image)
 
     @classmethod

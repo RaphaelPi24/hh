@@ -76,9 +76,10 @@ class VacanciesForm:
 
 
 class AdminForm:
-    errors: list[str] = []
+
 
     def __init__(self, form: dict) -> None:
+        self.errors: list[str] = []
         self.form = form
 
         self.professions_for_autoparser = form.get('auto_collect_vacancies')

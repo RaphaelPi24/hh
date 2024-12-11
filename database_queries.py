@@ -85,47 +85,40 @@ def get_popular_skills(profession):
 
     skill_counter = Counter(skill['name'] for skill in data)
     sorted_skills = sorted(skill_counter.items(), key=lambda x: x[1], reverse=False)
-    print(sorted_skills)
     return sorted_skills
 
 
 def get_comparing_skills_with_salary(profession: str) -> dict:
     conditions = [VacancyCard.name.contains(query) for query in profession.split()]
-    # Объединяем условия с оператором & (AND)
+
+    conditions.append(VacancyCard.currency == 'RUR')
+    conditions.append(VacancyCard.average_salary.is_null(False))
     if conditions:
         query_conditions = reduce(operator.and_, conditions)
     else:
-        query_conditions = True  # Если условий нет, оставляем запрос без фильтрации
+        query_conditions = True
 
     data = (
         VacancyCard
-        .select(VacancyCard.skills, VacancyCard.average_salary)
+        .select(VacancyCard.average_salary, Skill.name)
+        .join(VacancySkill)
+        .join(Skill)
         .where(query_conditions)
         .dicts()
     )
 
-    keyskills = defaultdict(lambda: {"count": 0, "salary": []})
+    skills_salary = defaultdict(lambda: {"count": 0, "salary": 0})
+    for entry in data:
+        skill = entry['name']
+        salary = entry['average_salary']
+        skills_salary[skill]["count"] += 1
+        skills_salary[skill]["salary"] += salary
 
-    for cart in data:
-        if cart.get('skills') is not None and cart.get('average_salary') is not None:
-            for skill in cart.get('skills').split(','):
-                # Увеличиваем счетчик
-                keyskills[skill]['count'] += 1
+    for skill, values in skills_salary.items():
+        values["salary"] //= values["count"]
 
-                # Добавляем зарплату
-                keyskills[skill]['salary'].append(cart['average_salary'])
-
-    # Рассчитываем среднюю зарплату для каждого навыка
-    for skill, values in keyskills.items():
-        if values['salary']:
-            values['salary'] = sum(values['salary']) // len(values['salary'])
-        else:
-            values['salary'] = 0  # Или оставьте пустым, если хотите сохранить пустой список
-
-    for k in keyskills.keys():
-        if isinstance(keyskills[k]['salary'], list):
-            keyskills[k]['salary'] = 0
-    data = {k: v for k, v in keyskills.items() if isinstance(v['salary'], (int, float)) and v['salary'] >= 0}
-    # Сортировка по зарплате в порядке убывания
-    data = dict(sorted(data.items(), key=lambda x: x[1]['salary'], reverse=False))
-    return data
+    skills_salary = dict(skills_salary)
+    sorted_skills_salary = dict(
+        sorted(skills_salary.items(), key=lambda item: item[1]["salary"], reverse=False)
+    )
+    return sorted_skills_salary

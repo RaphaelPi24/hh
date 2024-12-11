@@ -1,8 +1,7 @@
 from analytics.diagrams import send, PopularSkillDiagramBuilder, SkillsSalaryDiagramBuilder
-from cache import CacheSession, Cache, CacheSessionPathImage
+from cache import Cache, CacheSessionPathImage
 from database_queries import get_popular_skills, get_comparing_skills_with_salary
 from images import Image
-from validation import normalize_string, validate_letters_with_spaces, validate_digits_only, is_positive_number
 
 
 class BaseDiagramProcessor:
@@ -12,7 +11,6 @@ class BaseDiagramProcessor:
     def __init__(self, cache: Cache):
         self.cache = cache
 
-
     def process(self, profession: str) -> str:
         data_for_diagram, diagram, path = prepare_data(
             profession, self.cache, self.query,
@@ -21,6 +19,7 @@ class BaseDiagramProcessor:
         send(diagram, data_for_diagram, path)
         self.cache.save_path_image(profession, path)
         return str(path)
+
 
 class SalaryDiagramProcessor(BaseDiagramProcessor):
     query = staticmethod(get_comparing_skills_with_salary)
@@ -42,4 +41,3 @@ def prepare_data(profession: str, cache: CacheSessionPathImage, func_for_get_dat
         diagram = class_for_draw()
         path = Image.get_path(profession)
     return data_for_diagram, diagram, path
-
