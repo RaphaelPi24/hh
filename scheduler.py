@@ -3,6 +3,8 @@ from typing import Callable, Union, List
 from apscheduler.schedulers import SchedulerAlreadyRunningError
 from apscheduler.schedulers.background import BackgroundScheduler
 
+from log import logger
+
 
 class Scheduler:
     scheduler = BackgroundScheduler()
@@ -13,16 +15,16 @@ class Scheduler:
         if not self.scheduler.running:
             try:
                 self.scheduler.start()
-                print(f'Планировщик запущен с id - {id}')
+                logger.info(f'Планировщик запущен с id - {id}')
             except SchedulerAlreadyRunningError:
-                print("Планировщик уже запущен")
+                logger.info("Планировщик уже запущен")
 
     def stop(self, id: str) -> None:
         try:
             self.scheduler.remove_job(id)
-            print(f'Планировщик с id - {id} Отключён')
+            logger.info(f'Планировщик с id - {id} Отключён')
         except Exception as e:
-            print(e)
+            logger.info(e)
 
     def add_job(self, time: int, f: Callable, id: str, params: Union[list, str, None] = None) -> None:
         if params is not None:

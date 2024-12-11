@@ -1,5 +1,6 @@
 from peewee import IntegrityError
 
+from log import logger
 from models import VacancyCard, Skill, VacancySkill, db
 from parsers.easy_parser import WorkCart
 
@@ -7,8 +8,6 @@ from parsers.easy_parser import WorkCart
 def to_bd_vacancies(data: tuple[WorkCart]) -> None:
     for cart in data:
         try:
-            print(cart)
-            # Используем get_or_create для предотвращения дублирования по cart_id
             vacancy_card, created = VacancyCard.get_or_create(
                 vacancy_id=cart.vacancy_id,  # Проверяем уникальный ID вакансии
                 defaults={
@@ -27,13 +26,8 @@ def to_bd_vacancies(data: tuple[WorkCart]) -> None:
                     'average_salary': cart.average_salary
                 }
             )
-
-            if created:
-                print(f"Vacancy {cart.name} added successfully.")
-            else:
-                print(f"Vacancy {cart.name} already exists.")
         except IntegrityError as e:
-            print(f"Error saving vacancy: {e}")
+            logger.info(f"Error saving vacancy: {e}")
 
 
 def to_bd_skills(data: set) -> None:
@@ -43,7 +37,7 @@ def to_bd_skills(data: set) -> None:
             # Вставляем данные с игнорированием конфликта уникальности
             Skill.insert_many(formatted_data, fields=[Skill.name]).on_conflict_ignore().execute()
     except IntegrityError as e:
-        print(f'Не получилось записать умения в Таблицу Skill {e}')
+        logger.info(f'Не получилось записать умения в Таблицу Skill {e}')
 
 
 def to_bd_card_skills(vacancy_data: dict) -> None:
@@ -62,7 +56,7 @@ def to_bd_card_skills(vacancy_data: dict) -> None:
                         VacancySkill(vacancy_id=id_cart_from_vacancy_card, skill_id=id_skill_from_skill))
 
     try:
-        with VacancySkill._meta.database.atomic():
+        with db.atomic():
             VacancySkill.bulk_create(cards_skills)
     except IntegrityError as e:
-        print(f'Не получилось вставить Vacancy Skill {e}')
+        logger.info(f'Не получилось вставить Vacancy Skill {e}')

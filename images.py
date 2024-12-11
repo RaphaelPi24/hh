@@ -1,6 +1,8 @@
 import base64
 from pathlib import Path
 
+from log import logger
+
 
 class Image:  # DiagramFile FileManager
     path = Path("static/image_diagram")  # Относительный путь как объект Path
@@ -8,7 +10,7 @@ class Image:  # DiagramFile FileManager
 
     @classmethod
     def delete(cls, names_cache):
-        print("Процесс удаления изображений...")
+        logger.info("Процесс удаления изображений...")
 
         # Перебираем файлы в директории
         for file in cls.path.iterdir():
@@ -21,16 +23,13 @@ class Image:  # DiagramFile FileManager
 
             try:
                 file.unlink()  # Удаляем файл
-                print(f'Удалено изображение: {file.name}')
+                logger.info(f'Удалено изображение: {file.name}')
             except Exception as e:
-                print(f'Ошибка при удалении {file.name}: {e}')
+                logger.info(f'Ошибка при удалении {file.name}: {e}')
 
     @classmethod
     def save(cls, filename: str, image: base64):
         directory = filename.parent
-        if directory.exists() and not directory.is_dir():
-            raise FileExistsError(f"Невозможно создать директорию: {directory} уже существует как файл")
-        directory.mkdir(parents=True, exist_ok=True)
         filename.write_bytes(image)
 
     @classmethod

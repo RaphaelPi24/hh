@@ -1,3 +1,4 @@
+import logging
 import time
 from sched import scheduler
 
@@ -9,6 +10,7 @@ from cache import CacheSession, VacancyCache, CacheSessionPathImage
 from database_queries import Model, get_comparing_skills_with_salary
 from forms import VacanciesForm, AdminForm, AnalyticsForm
 from images import Image
+from log import logger
 from parsers.main import process_profession_data
 from scheduler import Scheduler
 
@@ -21,8 +23,10 @@ vacancy_cache = VacancyCache()
 cache_path_image = CacheSessionPathImage()
 
 
+
 @app.route('/', methods=['GET'])
 def get_base():
+    logger.info("Приложение запущено!")
     return render_template('views/base_content.html')
 
 
@@ -109,13 +113,8 @@ def get_page_vacancies():
 
 @app.route('/analytics', methods=['GET'])
 def get_analytics():
-    # path, profession = cache_path_image.get_last_entry()
-    # if path is None:
-    #     path = Image.get_path(profession)
     return render_template('views/analytics.html')
-    # image_path=path,
-    # error_message_for_popular_skills=cache_session.get_message('profession'),
-    # error_message_for_skills_salary=cache_session.get_message('profession_stats'))
+
 
 
 @app.route('/skills_salary_diagram', methods=['POST'])
