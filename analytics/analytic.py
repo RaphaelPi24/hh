@@ -20,7 +20,7 @@ class BaseDiagramProcessor:
         )
         send(diagram, data_for_diagram, path)
         self.cache.save_path_image(profession, path)
-        return path
+        return str(path)
 
 class SalaryDiagramProcessor(BaseDiagramProcessor):
     query = staticmethod(get_comparing_skills_with_salary)

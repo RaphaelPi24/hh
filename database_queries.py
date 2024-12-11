@@ -1,10 +1,10 @@
 import operator
-from collections import defaultdict
+from collections import defaultdict, Counter
 from functools import reduce
 from typing import List, Dict
 
 from forms import VacanciesForm
-from models import VacancyCard
+from models import VacancyCard, Skill, VacancySkill
 
 
 class Model:
@@ -72,30 +72,21 @@ class Model:
 
 
 def get_popular_skills(profession):
-    conditions = [VacancyCard.name.contains(query) for query in profession.split()]
-    # Объединяем условия с оператором & (AND)
-    if conditions:
-        query_conditions = reduce(operator.and_, conditions)
-    else:
-        query_conditions = True  # Если условий нет, оставляем запрос без фильтрации
-
+    profession = profession.split()
+    conditions = [VacancyCard.name.contains(query) for query in profession]
     data = (
-        VacancyCard
-        .select(VacancyCard.skills)
-        .where(query_conditions)
+        Skill
+        .select(Skill.name)
+        .join(VacancySkill)
+        .join(VacancyCard)
+        .where(*conditions)
         .dicts()
     )
-    popular_skills = {}
 
-    for cart in data:
-        text = cart.get('skills')
-        if text:
-            skills_list = [skill.strip() for skill in text.split(',') if skill.strip()]
-            for skill in skills_list:
-                # Увеличиваем счетчик для каждого скилла
-                popular_skills[skill] = popular_skills.get(skill, 0) + 1
-    sorted_popular_skills = sorted(popular_skills.items(), key=lambda x: x[1])
-    return sorted_popular_skills
+    skill_counter = Counter(skill['name'] for skill in data)
+    sorted_skills = sorted(skill_counter.items(), key=lambda x: x[1], reverse=False)
+    print(sorted_skills)
+    return sorted_skills
 
 
 def get_comparing_skills_with_salary(profession: str) -> dict:

@@ -109,7 +109,7 @@ class AdminForm:
 
     def validate_professions_for_autoparser(self) -> str | None:
         try:
-            normal_profession = normalize_string(self.auto_parser)
+            normal_profession = normalize_string(self.professions_for_autoparser)
             valid_profession = validate_letters_with_spaces(normal_profession)
         except ValueError as e:
             valid_profession = None

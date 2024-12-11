@@ -29,14 +29,14 @@ class Image: # DiagramFile FileManager
 
     @classmethod
     def save(cls, filename: str, image: base64):
-        full_pathfile = cls.get_path(filename) # Полный путь файла
-        directory = full_pathfile.parent
+
+        directory = filename.parent
         if directory.exists() and not directory.is_dir():
             raise FileExistsError(f"Невозможно создать директорию: {directory} уже существует как файл")
 
         directory.mkdir(parents=True, exist_ok=True)
 
-        full_pathfile.write_bytes(image)
+        filename.write_bytes(image)
 
     @classmethod
     def get_path(cls, title: str) -> Path:

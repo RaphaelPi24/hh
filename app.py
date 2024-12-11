@@ -39,9 +39,9 @@ def get_admin():
 @app.route('/manual', methods=['POST'])
 def manual_collect_vacancies():
     form = AdminForm(request.form)
-    valid_profession = form.validate_professions_for_autoparser()
+    valid_profession = form.validate_manual_parser()
     if form.errors:
-        return render_template('views/admin.html', error_autocollection=form.errors)
+        return render_template('views/admin.html', error_message_manual_collect_vacancies=form.errors)
 
     process_profession_data(valid_profession)
     return render_template('views/admin.html', success_message_manual_collect_vacancies='Сбор успешно завершён')
