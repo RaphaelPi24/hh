@@ -10,4 +10,4 @@ logging.basicConfig(
 )
 
 # Используем логгер
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) # в каждый файл __name__ названия файла

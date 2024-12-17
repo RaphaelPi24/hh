@@ -1,0 +1,7 @@
+{% extends 'base_headers.html' %}
+{% block content %}
+    <h1>Профиль</h1>
+    <p>Привет, {{ current_user.username }}!</p>
+    <p>Ваша почта: {{ current_user.email }}!</p>
+    <a href="{{ url_for('auth.logout') }}">Выйти</a>
+{% endblock %}

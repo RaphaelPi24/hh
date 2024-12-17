@@ -1,9 +1,10 @@
-import logging
 import time
 from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
+from flask_login import LoginManager
 
+from auth.views import bp as auth_bp
 from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, SalaryDiagramProcessor
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
 from cache import CacheSession, VacancyCache, CacheSessionPathImage
@@ -22,6 +23,37 @@ cache_session = CacheSession()
 vacancy_cache = VacancyCache()
 cache_path_image = CacheSessionPathImage()
 
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login_get'
+login_manager.init_app(app)
+
+users = {}
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    user = connection.hgetall(f'user:{user_id}')
+    if user is None or len(user) == 0:
+        user_instance = User.get(user_id)
+        user_dict = model_to_dict(user_instance)
+        # Преобразование значений словаря в строки для совместимости с Redis
+        user_str_dict = {key: str(value) for key, value in user_dict.items()}
+        connection.hset(f'user:{user_id}', mapping=user_str_dict)
+        logger.info('Пользователь создан в кэше')
+    else:
+        # Преобразование ключей и значений обратно из байтов в строки
+        user = {key.decode('utf-8'): value.decode('utf-8') for key, value in user.items()}
+        user_instance = User(**user)
+        logger.info('Пользователь извлечён из кэша')
+    return user_instance
+
+
+app.register_blueprint(auth_bp)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return users.get(user_id)
 
 
 @app.route('/', methods=['GET'])
@@ -47,7 +79,7 @@ def manual_collect_vacancies():
     if form.errors:
         return render_template('views/admin.html', error_message_manual_collect_vacancies=form.errors)
 
-    process_profession_data(valid_profession)
+    process_profession_data(valid_profession)  # rq :(
     return render_template('views/admin.html', success_message_manual_collect_vacancies='Сбор успешно завершён')
 
 
@@ -114,7 +146,6 @@ def get_page_vacancies():
 @app.route('/analytics', methods=['GET'])
 def get_analytics():
     return render_template('views/analytics.html')
-
 
 
 @app.route('/skills_salary_diagram', methods=['POST'])

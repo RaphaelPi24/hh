@@ -2,9 +2,12 @@ from validation import validate_letters_only, validate_digits_only, validate_let
     is_positive_number
 
 
-class VacanciesForm:
-    errors: list[str] = []
+class Form:
+    def get_field(self):
+        ...
 
+
+class VacanciesForm(Form):
     def __init__(self, form: dict) -> None:
         self.form = form
         self.select = self.get_search_type()
@@ -14,6 +17,7 @@ class VacanciesForm:
         self.city = self.get_city()
         self.company = self.get_company()
         self.remote = self.get_remote()
+        self.errors: list[str] = []
 
     def get_search_type(self) -> str | None:
         select = self.form.get('search-type')
@@ -77,7 +81,6 @@ class VacanciesForm:
 
 class AdminForm:
 
-
     def __init__(self, form: dict) -> None:
         self.errors: list[str] = []
         self.form = form
@@ -133,15 +136,14 @@ class AdminForm:
 
 
 class AnalyticsForm:
-    errors: list[str] = []
 
     def __init__(self, form: dict) -> None:
         self.form = form
-
+        self.errors: list[str] = []
         self.popular_skill = form.get('profession')
         self.skill_salary = form.get('profession_stats')
 
-    def detail_validate(self, string, title) -> str|None:
+    def detail_validate(self, string, title) -> str | None:
         try:
             normal_profession = normalize_string(string)
             valid_profession = validate_letters_with_spaces(normal_profession)
@@ -150,7 +152,7 @@ class AnalyticsForm:
             self.errors.append(f'Invalid {title}: {e}')
         return valid_profession
 
-    def validate_skill_salary(self) -> str|None:
+    def validate_skill_salary(self) -> str | None:
         return self.detail_validate(self.skill_salary, 'skill salary')
 
     def validate_popular_skill(self) -> str | None:

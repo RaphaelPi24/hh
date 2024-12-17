@@ -1,4 +1,5 @@
 import peewee as pw
+from flask_login import UserMixin
 
 db = pw.PostgresqlDatabase('hh', host='localhost', port=5432, user='userhh', password='159')
 
@@ -43,8 +44,21 @@ class VacancySkill(BaseModel):
 
     vacancy = pw.ForeignKeyField(VacancyCard, backref='skills', on_delete='CASCADE')
     skill = pw.ForeignKeyField(Skill, backref='vacancies', on_delete='CASCADE')
+
+
+class User(BaseModel, UserMixin):
+    class Meta:
+        table_name = 'user'
+
+    name = pw.CharField(unique=True)
+    email = pw.CharField(unique=True)
+    password = pw.CharField()
+
+
+
 # if __name__ == __main__
-VacancyCard.create_table()
-Skill.create_table()
-VacancySkill.create_table()
+# VacancyCard.create_table()
+# Skill.create_table()
+# VacancySkill.create_table()
+#User.create_table()
 

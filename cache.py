@@ -19,13 +19,6 @@ class CacheSessionPathImage(Cache):
             path = self.redis_client.hget('path_image', profession)
             return path
 
-    # def get_last_entry(self) -> tuple[str | None]:
-    #     profession = self.redis_client.hget('path_image', 'diagram')
-    #     if profession:
-    #         path = self.redis_client.hget('path_image', profession)
-    #     return path, profession
-    # cache должен проверять кэш, а не создавать пути из Image
-
     def save_path_image(self, name: str, path: str) -> None:
         if isinstance(path, Path):
             path = str(path)

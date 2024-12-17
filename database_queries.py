@@ -81,7 +81,7 @@ def get_popular_skills(profession):
         .join(VacancyCard)
         .where(*conditions)
         .dicts()
-    )
+    ) # list
 
     skill_counter = Counter(skill['name'] for skill in data)
     sorted_skills = sorted(skill_counter.items(), key=lambda x: x[1], reverse=False)

@@ -33,8 +33,7 @@ def to_bd_vacancies(data: tuple[WorkCart]) -> None:
 def to_bd_skills(data: set) -> None:
     formatted_data = [{"name": skill} for skill in data]
     try:
-        with db.atomic(): # транзакция
-            # Вставляем данные с игнорированием конфликта уникальности
+        with db.atomic():  # транзакция
             Skill.insert_many(formatted_data, fields=[Skill.name]).on_conflict_ignore().execute()
     except IntegrityError as e:
         logger.info(f'Не получилось записать умения в Таблицу Skill {e}')
