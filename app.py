@@ -3,15 +3,17 @@ from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
 from flask_login import LoginManager
+from playhouse.shortcuts import model_to_dict
 
 from auth.views import bp as auth_bp
 from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, SalaryDiagramProcessor
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
-from cache import CacheSession, VacancyCache, CacheSessionPathImage
+from cache import CacheSession, VacancyCache, CacheSessionPathImage, AauthorizedUser, Cache
 from database_queries import Model, get_comparing_skills_with_salary
 from forms import VacanciesForm, AdminForm, AnalyticsForm
 from images import Image
 from log import logger
+from models import User
 from parsers.main import process_profession_data
 from scheduler import Scheduler
 
@@ -22,7 +24,7 @@ scheduler = Scheduler()
 cache_session = CacheSession()
 vacancy_cache = VacancyCache()
 cache_path_image = CacheSessionPathImage()
-
+connection = Cache().redis_client
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login_get'
 login_manager.init_app(app)
@@ -42,7 +44,7 @@ def load_user(user_id):
         logger.info('Пользователь создан в кэше')
     else:
         # Преобразование ключей и значений обратно из байтов в строки
-        user = {key.decode('utf-8'): value.decode('utf-8') for key, value in user.items()}
+        user = {key: value for key, value in user.items()}
         user_instance = User(**user)
         logger.info('Пользователь извлечён из кэша')
     return user_instance
@@ -51,9 +53,9 @@ def load_user(user_id):
 app.register_blueprint(auth_bp)
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return users.get(user_id)
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return users.get(user_id)
 
 
 @app.route('/', methods=['GET'])

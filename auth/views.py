@@ -64,3 +64,8 @@ def register_post():
 
     login_user(User.get(User.name == user_data.name))
     return redirect(url_for('get_base'))
+
+@bp.route('/profile', methods=['GET'])
+@login_required
+def profile():
+    return render_template('views/profile.html')
