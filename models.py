@@ -1,4 +1,5 @@
 import peewee as pw
+from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
 
 db = pw.PostgresqlDatabase('hh', host='localhost', port=5432, user='userhh', password='159')
@@ -31,6 +32,7 @@ class VacancyCard(BaseModel):
     url = pw.CharField()
     average_salary = pw.IntegerField()
 
+
 class Skill(BaseModel):
     class Meta:
         table_name = 'Skill'
@@ -54,11 +56,14 @@ class User(BaseModel, UserMixin):
     email = pw.CharField(unique=True)
     password = pw.CharField()
 
-
+    @classmethod
+    def create(cls, **query):
+        if query.get('password'):
+            query['password'] = Bcrypt().generate_password_hash(query.get('password')).decode('utf-8')  # переопределить в .create
+        return super().create(**query)
 
 # if __name__ == __main__
 # VacancyCard.create_table()
 # Skill.create_table()
 # VacancySkill.create_table()
-#User.create_table()
-
+# User.create_table()
