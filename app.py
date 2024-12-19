@@ -3,12 +3,12 @@ from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
 from flask_login import LoginManager, login_required
-from playhouse.shortcuts import model_to_dict
+from rq import Queue
 
-from auth.views import bp as auth_bp
 from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, SalaryDiagramProcessor
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
-from cache import CacheSession, VacancyCache, CacheSessionPathImage, AauthorizedUser, Cache
+from auth.views import bp as auth_bp
+from cache import CacheSession, VacancyCache, CacheSessionPathImage, Cache
 from database_queries import Model, get_comparing_skills_with_salary
 from forms import VacanciesForm, AdminForm, AnalyticsForm
 from images import Image
@@ -24,38 +24,23 @@ scheduler = Scheduler()
 cache_session = CacheSession()
 vacancy_cache = VacancyCache()
 cache_path_image = CacheSessionPathImage()
-# connection = Cache().redis_client
+connection = Cache().redis_client
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login_get'
 login_manager.init_app(app)
 
 users = {}
 
+queue = Queue(connection=connection)
 
-# @login_manager.user_loader
-# def load_user(user_id):
-#     user = connection.hgetall(f'user:{user_id}')
-#     if user is None or len(user) == 0:
-#         user_instance = User.get(user_id)
-#         user_dict = model_to_dict(user_instance)
-#         # Преобразование значений словаря в строки для совместимости с Redis
-#         user_str_dict = {key: str(value) for key, value in user_dict.items()}
-#         connection.hset(f'user:{user_id}', mapping=user_str_dict)
-#         logger.info('Пользователь создан в кэше')
-#     else:
-#         # Преобразование ключей и значений обратно из байтов в строки
-#         user = {key: value for key, value in user.items()}
-#         user_instance = User(**user)
-#         logger.info('Пользователь извлечён из кэша')
-#     return user_instance
+
+# Задача для очереди
+def process_professions_task(professions: str):
+    process_profession_data(professions)
 
 
 app.register_blueprint(auth_bp)
 
-
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return users.get(user_id)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -88,7 +73,7 @@ def manual_collect_vacancies():
     if form.errors:
         return render_template('views/admin.html', error_message_manual_collect_vacancies=form.errors)
 
-    process_profession_data(valid_profession)  # rq :(
+    queue.enqueue(process_professions_task, valid_profession)
     return render_template('views/admin.html', success_message_manual_collect_vacancies='Сбор успешно завершён')
 
 
