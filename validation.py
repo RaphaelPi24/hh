@@ -1,10 +1,13 @@
 import re
 
+class NullError(Exception):
+    pass
+
 
 def normalize_string(string: str | None) -> str | None:
     if string is not None and len(string) > 0:
         return string.strip()
-    raise ValueError(f'Строка должна быть заполнена: {string}')
+    raise NullError(f'Строка должна быть заполнена: {string}')
 
 
 def validate_letters_with_spaces(string: str) -> str:

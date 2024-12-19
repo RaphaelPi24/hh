@@ -2,7 +2,7 @@ import time
 from sched import scheduler
 
 from flask import Flask, render_template, request, url_for, redirect
-from flask_login import LoginManager
+from flask_login import LoginManager, login_required
 from playhouse.shortcuts import model_to_dict
 
 from auth.views import bp as auth_bp
@@ -24,7 +24,7 @@ scheduler = Scheduler()
 cache_session = CacheSession()
 vacancy_cache = VacancyCache()
 cache_path_image = CacheSessionPathImage()
-connection = Cache().redis_client
+# connection = Cache().redis_client
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login_get'
 login_manager.init_app(app)
@@ -32,22 +32,22 @@ login_manager.init_app(app)
 users = {}
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    user = connection.hgetall(f'user:{user_id}')
-    if user is None or len(user) == 0:
-        user_instance = User.get(user_id)
-        user_dict = model_to_dict(user_instance)
-        # Преобразование значений словаря в строки для совместимости с Redis
-        user_str_dict = {key: str(value) for key, value in user_dict.items()}
-        connection.hset(f'user:{user_id}', mapping=user_str_dict)
-        logger.info('Пользователь создан в кэше')
-    else:
-        # Преобразование ключей и значений обратно из байтов в строки
-        user = {key: value for key, value in user.items()}
-        user_instance = User(**user)
-        logger.info('Пользователь извлечён из кэша')
-    return user_instance
+# @login_manager.user_loader
+# def load_user(user_id):
+#     user = connection.hgetall(f'user:{user_id}')
+#     if user is None or len(user) == 0:
+#         user_instance = User.get(user_id)
+#         user_dict = model_to_dict(user_instance)
+#         # Преобразование значений словаря в строки для совместимости с Redis
+#         user_str_dict = {key: str(value) for key, value in user_dict.items()}
+#         connection.hset(f'user:{user_id}', mapping=user_str_dict)
+#         logger.info('Пользователь создан в кэше')
+#     else:
+#         # Преобразование ключей и значений обратно из байтов в строки
+#         user = {key: value for key, value in user.items()}
+#         user_instance = User(**user)
+#         logger.info('Пользователь извлечён из кэша')
+#     return user_instance
 
 
 app.register_blueprint(auth_bp)
@@ -57,14 +57,20 @@ app.register_blueprint(auth_bp)
 # def load_user(user_id):
 #     return users.get(user_id)
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get_or_none(User.id == user_id)
+
 
 @app.route('/', methods=['GET'])
+@login_required
 def get_base():
     logger.info("Приложение запущено!")
     return render_template('views/base_content.html')
 
 
 @app.route('/admin', methods=['GET'])
+@login_required
 def get_admin():
     return render_template(
         'views/admin.html',
@@ -75,6 +81,7 @@ def get_admin():
 
 
 @app.route('/manual', methods=['POST'])
+@login_required
 def manual_collect_vacancies():
     form = AdminForm(request.form)
     valid_profession = form.validate_manual_parser()
@@ -86,6 +93,7 @@ def manual_collect_vacancies():
 
 
 @app.route('/admin', methods=['POST'])
+@login_required
 def collect_vacancies():
     form = AdminForm(request.form)
     valid_professions, valid_timer = form.validate_auto_parser()
@@ -98,6 +106,7 @@ def collect_vacancies():
 
 
 @app.route('/delete_images', methods=['POST'])
+@login_required
 def process_delete_images():
     form = AdminForm(request.form)
     timer_digit = form.validate_params_for_del_image()
@@ -111,6 +120,7 @@ def process_delete_images():
 
 
 @app.route('/stop_main_collection', methods=['POST'])
+@login_required
 def stop_main_collection():
     scheduler.stop('autocollection')
     cache_session.schedule_run['autocollecion'] = False
@@ -118,6 +128,7 @@ def stop_main_collection():
 
 
 @app.route('/stop_image_cleanup', methods=['POST'])
+@login_required
 def stop_image_cleanup():
     scheduler.stop('delete_images')
     cache_session.schedule_run['delete_images'] = False
@@ -125,6 +136,7 @@ def stop_image_cleanup():
 
 
 @app.route('/show_vacancies', methods=['POST'])
+@login_required
 def get_show():
     start = time.time()
     form = request.form
@@ -141,16 +153,19 @@ def get_show():
 
 
 @app.route('/vacancies', methods=['GET'])
+@login_required
 def get_page_vacancies():
     return render_template('views/filter_vacancies.html')
 
 
 @app.route('/analytics', methods=['GET'])
+@login_required
 def get_analytics():
     return render_template('views/analytics.html')
 
 
 @app.route('/skills_salary_diagram', methods=['POST'])
+@login_required
 def skills_salary():
     form = AnalyticsForm(request.form)
     valid_profession = form.validate_skill_salary()
@@ -168,6 +183,7 @@ def skills_salary():
 
 
 @app.route('/popular_skills_diagram', methods=['POST'])
+@login_required
 def popular_skills():
     form = AnalyticsForm(request.form)
     valid_profession = form.validate_popular_skill()

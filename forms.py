@@ -1,10 +1,16 @@
 from validation import validate_letters_only, validate_digits_only, validate_letters_with_spaces, normalize_string, \
-    is_positive_number
+    is_positive_number, NullError
 
 
 class Form:
-    def get_field(self):
-        ...
+    def get_field(self, validators: list, value: str, title: str | None) -> str | None:
+        try:
+            for validator in validators:
+                value = validator(value)
+        except ValueError as e:
+            value = None
+            self.errors.append(f'Invalid {title}: {e}')
+        return value
 
 
 class VacanciesForm(Form):
@@ -41,6 +47,8 @@ class VacanciesForm(Form):
         try:
             normal_salary = normalize_string(salary)
             valid_salary = validate_digits_only(normal_salary)
+        except NullError:
+            return ''
         except ValueError as e:
             self.errors.append(f'Invalid salary: {e}')
             valid_salary = None
@@ -51,6 +59,8 @@ class VacanciesForm(Form):
         try:
             normal_city = normalize_string(city)
             valid_city = validate_letters_only(normal_city)
+        except NullError:
+            return ''
         except ValueError as e:
             self.errors.append(f'Invalid city: {e}')
             valid_city = None
@@ -60,6 +70,8 @@ class VacanciesForm(Form):
         company = self.form.get('company')
         try:
             valid_company = normalize_string(company)
+        except NullError:
+            return ''
         except ValueError as e:
             self.errors.append(f'Invalid company: {e}')
             valid_company = None
@@ -69,14 +81,7 @@ class VacanciesForm(Form):
         remote = self.form.get('remote')
         return True if remote == 'on' else None
 
-    def get_field(self, validators: list, title: str, value: str | None) -> str | None:
-        try:
-            for validator in validators:
-                title = validator(title)
-        except ValueError as e:
-            title = None
-            self.errors.append(f'Invalid {value}: {e}')
-        return title
+
 
 
 class AdminForm:

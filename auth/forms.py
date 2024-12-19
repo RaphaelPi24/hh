@@ -1,6 +1,6 @@
 from peewee import IntegrityError
 
-from auth.utils import check_name_and_password
+from auth.utils import check_name_and_password, NoMatchLoginPass
 from auth.validation import Register, Login
 from models import User
 
@@ -19,12 +19,15 @@ class RegistrationForm:
                 email=user_data.email,
                 password=user_data.password
             )
+        except NoMatchLoginPass as e: # не пашет
+            self.errors.append(str(e))
         except (ValueError, IntegrityError) as e:
-            #self.errors.append(str(e))
+
             for err in e.errors():
                 field = err.get('loc')[0]
                 message = err.get('msg')
                 self.errors.append(f'{field.capitalize()}: {message}')
+
 
 
 class LoginForm:
@@ -39,8 +42,10 @@ class LoginForm:
             self.user_data = Login.model_validate(self.form)
             self.user = check_name_and_password(self.user_data)
         except (ValueError, User.DoesNotExist) as e:
-            #self.errors.append(str(e))
             for err in e.errors():
                 field = err.get('loc')[0]
                 message = err.get('msg')
                 self.errors.append(f'{field.capitalize()}: {message}')
+        except NoMatchLoginPass as e:
+
+            self.errors.append(''.join(e.args[0]))

@@ -20,7 +20,7 @@ def login_post():
         flash(form.errors)
         return redirect(url_for('auth.login_get'))
 
-    login_user(form.user)
+    login_user(form.user, remember=True)
     flash('Вы вошли в систему')
     return render_template('views/base_content.html')
 
@@ -44,7 +44,7 @@ def register_post():
     if form.errors:
         flash(form.errors)
         return redirect(url_for('auth.register_get'))
-    login_user(form.user)
+    login_user(form.user, remember=True)
     return redirect(url_for('get_base'))
 
 
