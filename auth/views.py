@@ -17,7 +17,8 @@ def login_post():
     form = LoginForm(request.form)
     form.validate()
     if form.errors:
-        flash(form.errors)
+        for error in form.errors:
+            flash(error, 'error')
         return redirect(url_for('auth.login_get'))
 
     login_user(form.user, remember=True)

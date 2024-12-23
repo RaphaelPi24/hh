@@ -3,15 +3,29 @@ from validation import validate_letters_only, validate_digits_only, validate_let
 
 
 class Form:
-    def get_field(self, validators: list, value: str, title: str | None) -> str | None:
+    errors = []
+    def get_field(self, validators: list, value: str, title: str | None, nullable: bool = False) -> str | None:
         try:
             for validator in validators:
                 value = validator(value)
+        except NullError:
+            if nullable:
+                return ''
+            self.errors.append(f'Invalid {title}: {e}')
+            return None
         except ValueError as e:
+            self.errors.append(f'Invalid {title}: {e}')
+            return None
+        return value
+
+    def get_field2(self, validators: list, value: str, title: str | None) -> str | None:
+        try:
+            for validator in validators:
+                value = validator(value)
+        except (ValueError, NullError) as e:
             value = None
             self.errors.append(f'Invalid {title}: {e}')
         return value
-
 
 class VacanciesForm(Form):
     def __init__(self, form: dict) -> None:
@@ -23,7 +37,7 @@ class VacanciesForm(Form):
         self.city = self.get_city()
         self.company = self.get_company()
         self.remote = self.get_remote()
-        self.errors: list[str] = []
+
 
     def get_search_type(self) -> str | None:
         select = self.form.get('search-type')
@@ -37,45 +51,25 @@ class VacanciesForm(Form):
         try:
             normal_full_search_query = normalize_string(full_search_query)
             valid_full_search_query = validate_letters_with_spaces(normal_full_search_query)
-        except ValueError as e:
+        except (ValueError, NullError) as e:
             self.errors.append(f'Invalid full_search_query {full_search_query}')
             valid_full_search_query = None
         return valid_full_search_query
 
     def get_salary(self, field_name: str) -> str | None:
         salary = self.form.get(field_name)
-        try:
-            normal_salary = normalize_string(salary)
-            valid_salary = validate_digits_only(normal_salary)
-        except NullError:
-            return ''
-        except ValueError as e:
-            self.errors.append(f'Invalid salary: {e}')
-            valid_salary = None
-        return valid_salary
+        value = self.get_field([normalize_string, validate_digits_only], salary, 'salary')
+        return value
 
     def get_city(self) -> str | None:
         city = self.form.get('city')
-        try:
-            normal_city = normalize_string(city)
-            valid_city = validate_letters_only(normal_city)
-        except NullError:
-            return ''
-        except ValueError as e:
-            self.errors.append(f'Invalid city: {e}')
-            valid_city = None
-        return valid_city
+        value = self.get_field([normalize_string, validate_letters_only], city, 'city')
+        return value
 
     def get_company(self) -> str | None:
         company = self.form.get('company')
-        try:
-            valid_company = normalize_string(company)
-        except NullError:
-            return ''
-        except ValueError as e:
-            self.errors.append(f'Invalid company: {e}')
-            valid_company = None
-        return valid_company
+        value = self.get_field([normalize_string], company, 'company')
+        return value
 
     def get_remote(self) -> bool | None:
         remote = self.form.get('remote')

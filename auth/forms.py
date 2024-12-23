@@ -47,5 +47,4 @@ class LoginForm:
                 message = err.get('msg')
                 self.errors.append(f'{field.capitalize()}: {message}')
         except NoMatchLoginPass as e:
-
             self.errors.append(''.join(e.args[0]))

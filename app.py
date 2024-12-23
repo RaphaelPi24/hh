@@ -14,7 +14,7 @@ from forms import VacanciesForm, AdminForm, AnalyticsForm
 from images import Image
 from log import logger
 from models import User
-from parsers.main import process_profession_data
+from parsers.main1 import process_profession_data
 from scheduler import Scheduler
 
 app = Flask(__name__)
@@ -32,12 +32,6 @@ login_manager.init_app(app)
 users = {}
 
 queue = Queue(connection=connection)
-
-
-# Задача для очереди
-def process_professions_task(professions: str):
-    process_profession_data(professions)
-
 
 app.register_blueprint(auth_bp)
 
@@ -73,7 +67,7 @@ def manual_collect_vacancies():
     if form.errors:
         return render_template('views/admin.html', error_message_manual_collect_vacancies=form.errors)
 
-    queue.enqueue(process_professions_task, valid_profession)
+    queue.enqueue('parsers.main1.process_profession_data', valid_profession)
     return render_template('views/admin.html', success_message_manual_collect_vacancies='Сбор успешно завершён')
 
 
@@ -123,9 +117,12 @@ def stop_image_cleanup():
 @app.route('/show_vacancies', methods=['POST'])
 @login_required
 def get_show():
-    start = time.time()
+
     form = request.form
     valid_form = VacanciesForm(form)
+    if valid_form.errors:
+        return render_template('views/vacancies_cards.html', errors=valid_form.errors)
+    start = time.time()
     vacancy_cache.get_form(valid_form)
     model = Model(valid_form)
     data = vacancy_cache.get_json_vacancy()
