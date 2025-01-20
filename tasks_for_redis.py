@@ -1,6 +1,6 @@
 from rq import Queue
 
-from parsers.main1 import process_profession_data
+from parsers.tasks import process_profession_data
 from cache import Cache
 
 connection = Cache().redis_client

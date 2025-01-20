@@ -5,10 +5,6 @@ from parsers.easy_parser import get_data, get_average_salary, get_skills
 from parsers.save_in_bd import to_bd_vacancies, to_bd_skills, to_bd_card_skills
 
 
-def process_profession_data(professions: str) -> None:
-    asyncio.run(main_parsing(professions))
-
-
 async def process_parsing(profession) -> None:
     vacancy_data = await get_data(profession)
     vacancy_data_have_average_salary = get_average_salary(vacancy_data)

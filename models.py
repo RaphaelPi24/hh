@@ -2,7 +2,15 @@ import peewee as pw
 from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
 
-db = pw.PostgresqlDatabase('hh', host='localhost', port=5432, user='userhh', password='159')
+import config
+
+db = pw.PostgresqlDatabase(
+    config.POSTGRES_DB,
+    host=config.DB_HOST,
+    port=config.POSTGRES_PORT,
+    user=config.POSTGRES_USER,
+    password=config.POSTGRES_PASSWORD,
+)
 
 db.connection()
 
