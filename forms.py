@@ -58,17 +58,17 @@ class VacanciesForm(Form):
 
     def get_salary(self, field_name: str) -> str | None:
         salary = self.form.get(field_name)
-        value = self.get_field([normalize_string, validate_digits_only], salary, 'salary')
+        value = self.get_field([normalize_string, validate_digits_only], salary, 'salary', nullable=True)
         return value
 
     def get_city(self) -> str | None:
         city = self.form.get('city')
-        value = self.get_field([normalize_string, validate_letters_only], city, 'city')
+        value = self.get_field([normalize_string, validate_letters_only], city, 'city', nullable=True)
         return value
 
     def get_company(self) -> str | None:
         company = self.form.get('company')
-        value = self.get_field([normalize_string], company, 'company')
+        value = self.get_field([normalize_string], company, 'company', nullable=True)
         return value
 
     def get_remote(self) -> bool | None:
