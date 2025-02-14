@@ -4,11 +4,12 @@ from pathlib import Path
 
 from redis import Redis
 
+import config
 from forms import VacanciesForm
 
 
 class Cache:
-    redis_client = Redis(host='localhost', port=6379, db=0, decode_responses=True)
+    redis_client = Redis(host=config.DB_HOST, port=6379, db=0, decode_responses=True)
 
 
 class CacheSessionPathImage(Cache):
