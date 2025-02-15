@@ -73,8 +73,8 @@ def manual_collect_vacancies():
     valid_profession = form.validate_manual_parser()
     if form.errors:
         return render_template('views/admin.html', error_message_manual_collect_vacancies=form.errors)
-    parsers.tasks.process_profession_data(valid_profession)
-    #queue.enqueue(parsers.tasks.process_profession_data, valid_profession)
+    #parsers.tasks.process_profession_data(valid_profession)
+    queue.enqueue(parsers.tasks.process_profession_data, valid_profession)
     return render_template('views/admin.html', success_message_manual_collect_vacancies='Сбор успешно завершён')
 
 
