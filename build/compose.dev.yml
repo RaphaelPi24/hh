@@ -1,0 +1,18 @@
+services:
+  flask:
+    develop:
+      watch:
+        - action: sync+restart
+          path: ../src
+          target: /app
+          ignore:
+            - .env
+            - requirements.txt
+        - action: rebuild
+          path: ../src/requirements.txt
+  db:
+    ports:
+      - "5433:5432" # хост контейнер
+  redis:
+    ports:
+      - "6379:6379"

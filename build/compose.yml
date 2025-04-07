@@ -1,0 +1,52 @@
+name: hh
+
+services:
+  nginx:
+    image: nginx:latest
+    restart: always
+    expose:
+      - 8088
+    ports:
+      - "80:8088"
+    volumes:
+      - ./src/static:/app/static
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - flask
+
+
+
+  flask:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - redis
+
+
+  db:
+    image: postgres:15
+    env_file: .env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  worker:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    depends_on:
+      - redis
+    command: rq worker --url redis://redis:6379
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

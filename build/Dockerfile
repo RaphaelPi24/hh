@@ -4,10 +4,12 @@ RUN apt-get update && apt-get install -y libpq-dev
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
+COPY ./src/requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY --chmod=775 build/entrypoint.sh /entrypoint.sh
+COPY ./src .
 COPY build/.env.production .env
-COPY . .
 
-CMD ["python", "app.py"]
+#CMD ["python", "app.py"]
+CMD ["/entrypoint.sh"]
