@@ -1,0 +1,10 @@
+services:
+  flask:
+    build:
+      context: ..
+      dockerfile: build/backend/prod.Dockerfile
+
+  worker:
+    build:
+      context: ..
+      dockerfile: build/backend/prod.Dockerfile
