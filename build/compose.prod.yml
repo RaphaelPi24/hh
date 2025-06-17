@@ -14,6 +14,15 @@ services:
     networks:
       nginx_hh:
         ipv4_address: 10.5.0.6
+  db:
+    networks:
+      nginx_hh:
+        ipv4_address: 10.5.0.7
+
+  redis:
+    networks:
+      nginx_hh:
+        ipv4_address: 10.5.0.8
 
 networks:
   nginx_hh:
