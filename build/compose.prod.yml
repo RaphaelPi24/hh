@@ -3,8 +3,22 @@ services:
     build:
       context: ..
       dockerfile: build/backend/prod.Dockerfile
+    networks:
+      nginx_hh:
+        - ipv4_address: 10.5.0.5
 
   worker:
     build:
       context: ..
       dockerfile: build/backend/prod.Dockerfile
+    networks:
+      nginx_hh:
+        - ipv4_address: 10.5.0.6
+
+networks:
+  nginx_hh:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/24
+          gateway: 10.5.0.1
