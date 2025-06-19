@@ -11,4 +11,4 @@ run_migrations()
 "
 
 # Запускаем основное приложение
-exec gunicorn -c gunicorn.py app:app
+exec gunicorn -c gunicorn.py -w 1 app:app
