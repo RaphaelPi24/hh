@@ -24,6 +24,7 @@ from scheduler import Scheduler
 
 app = Flask(__name__)
 
+
 app.secret_key = 'AbraKadabra5'
 scheduler = Scheduler()
 cache_session = CacheSession()
