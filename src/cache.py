@@ -55,3 +55,5 @@ class VacancyCache(Cache):
 
 class AauthorizedUser(Cache):
     ...
+
+
