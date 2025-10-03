@@ -81,7 +81,7 @@ async def get_skills(data: list[WorkCart]) -> tuple[set[str], dict]:
     return aggregated_skills, vacancy_id_and_skills
 
 
-async def get_skills_from_1_cart(cart: WorkCart) -> tuple[list, dict]:
+async def get_skills_from_1_cart(cart: WorkCart) -> dict[int, list]:
     async with aiohttp.ClientSession() as session:
         async with session.get(cart.api_url) as response:
             query_skills = await response.json()

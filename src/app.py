@@ -1,12 +1,11 @@
-import os
 import time
 from sched import scheduler
 
-import psycopg2
-from flask import Flask, render_template, request, url_for, redirect, jsonify
+from flask import Flask, render_template, request, url_for, redirect
 from flask_login import LoginManager, login_required
 from rq import Queue
 
+import parsers.tasks
 from analytics.analytic import prepare_data, PopularSkillsDiagramProcessor, SalaryDiagramProcessor
 from analytics.diagrams import send, SkillsSalaryDiagramBuilder
 from auth.views import bp as auth_bp
@@ -16,14 +15,9 @@ from forms import VacanciesForm, AdminForm, AnalyticsForm
 from images import Image
 from log import logger
 from models import User
-#from parsers.main1 import process_profession_data
-import parsers.tasks
 from scheduler import Scheduler
 
-
-
 app = Flask(__name__)
-
 
 app.secret_key = 'AbraKadabra5'
 scheduler = Scheduler()
@@ -40,8 +34,6 @@ users = {}
 queue = Queue(connection=connection)
 
 app.register_blueprint(auth_bp)
-
-
 
 
 @login_manager.user_loader
@@ -74,7 +66,6 @@ def manual_collect_vacancies():
     valid_profession = form.validate_manual_parser()
     if form.errors:
         return render_template('views/admin.html', error_message_manual_collect_vacancies=form.errors)
-    #parsers.tasks.process_profession_data(valid_profession)
     queue.enqueue(parsers.tasks.process_profession_data, valid_profession)
     return render_template('views/admin.html', success_message_manual_collect_vacancies='Сбор успешно завершён')
 
@@ -125,7 +116,6 @@ def stop_image_cleanup():
 @app.route('/show_vacancies', methods=['POST'])
 @login_required
 def get_show():
-
     form = request.form
     valid_form = VacanciesForm(form)
     if valid_form.errors:

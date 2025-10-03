@@ -6,7 +6,7 @@ class NoMatchLoginPass(Exception):
     ...
 
 
-def check_name_and_password(user_data) -> str:  # не пихать в pydantic бд запросы, pydantic - тупо проверяльщик
+def check_name_and_password(user_data) -> str:
     name = user_data.name
     password = user_data.password
     try:

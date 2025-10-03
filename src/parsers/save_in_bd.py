@@ -9,7 +9,7 @@ def to_bd_vacancies(data: tuple[WorkCart]) -> None:
     for cart in data:
         try:
             vacancy_card, created = VacancyCard.get_or_create(
-                vacancy_id=cart.vacancy_id,  # Проверяем уникальный ID вакансии
+                vacancy_id=cart.vacancy_id,
                 defaults={
                     'name': cart.name,
                     'salary_from': cart.salary_from,
@@ -33,7 +33,7 @@ def to_bd_vacancies(data: tuple[WorkCart]) -> None:
 def to_bd_skills(data: set) -> None:
     formatted_data = [{"name": skill} for skill in data]
     try:
-        with db.atomic():  # транзакция
+        with db.atomic():
             Skill.insert_many(formatted_data, fields=[Skill.name]).on_conflict_ignore().execute()
     except IntegrityError as e:
         logger.info(f'Не получилось записать умения в Таблицу Skill {e}')

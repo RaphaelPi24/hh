@@ -11,5 +11,4 @@ COPY --chmod=775 build/backend/entrypoint.prod.sh /entrypoint.sh
 COPY ./src .
 COPY build/.env.production .env
 
-#CMD ["python", "app.py"]
 CMD ["/entrypoint.sh"]
