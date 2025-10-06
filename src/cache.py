@@ -52,8 +52,3 @@ class VacancyCache(Cache):
         self.redis_client.setex(self.cache_key, 60, json.dumps(list(data)))
         self.names_cache.append(self.cache_key)
 
-
-class AauthorizedUser(Cache):
-    ...
-
-
