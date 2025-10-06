@@ -11,7 +11,7 @@ db = pw.PostgresqlDatabase(
     user=config.POSTGRES_USER,
     password=config.POSTGRES_PASSWORD,
 )
-db.connection()
+
 
 
 class BaseModel(pw.Model):
