@@ -13,7 +13,6 @@ db = pw.PostgresqlDatabase(
 )
 
 
-
 class BaseModel(pw.Model):
     id = pw.AutoField(primary_key=True)
 
