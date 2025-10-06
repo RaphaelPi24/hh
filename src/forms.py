@@ -76,8 +76,6 @@ class VacanciesForm(Form):
         return True if remote == 'on' else None
 
 
-
-
 class AdminForm:
 
     def __init__(self, form: dict) -> None:
