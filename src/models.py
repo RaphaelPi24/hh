@@ -27,8 +27,8 @@ class VacancyCard(BaseModel):
 
     vacancy_id = pw.CharField(unique=True)
     name = pw.CharField()
-    salary_from = pw.IntegerField()
-    salary_to = pw.IntegerField()
+    salary_from = pw.IntegerField(null=True)
+    salary_to = pw.IntegerField(null=True)
     area = pw.CharField()
     currency = pw.CharField()
     employer = pw.CharField()
@@ -37,7 +37,7 @@ class VacancyCard(BaseModel):
     employment = pw.CharField()
     api_url = pw.CharField()
     url = pw.CharField()
-    average_salary = pw.IntegerField()
+    average_salary = pw.IntegerField(null=True)
 
 
 class Skill(BaseModel):
