@@ -28,8 +28,9 @@ class Image:  # DiagramFile FileManager
                 logger.info(f'Ошибка при удалении {file.name}: {e}')
 
     @classmethod
-    def save(cls, filename: str, image: base64):
+    def save(cls, filename: Path, image: base64):
         directory = filename.parent
+        directory.mkdir(parents=True, exist_ok=True)
         filename.write_bytes(image)
 
     @classmethod
