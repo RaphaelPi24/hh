@@ -1,5 +1,7 @@
-from peewee import *
 from datetime import datetime
+
+from peewee import *
+
 from models import db, VacancyCard, Skill, VacancySkill, User
 
 
@@ -36,6 +38,11 @@ def apply_migration(version, operations):
         return True
 
 
+def alter_salary_columns(column_name):
+    # Используем ALTER COLUMN DROP NOT NULL для снятия ограничения обязательности
+    return lambda: db.execute_sql(f'ALTER TABLE "VacancyCard" ALTER COLUMN {column_name} DROP NOT NULL')
+
+
 MIGRATIONS = {
     '001_initial_tables': [
         lambda: VacancyCard.create_table(safe=True),
@@ -46,6 +53,12 @@ MIGRATIONS = {
     '002_add_indexes': [
         lambda: db.execute_sql('CREATE INDEX IF NOT EXISTS idx_vacancy_skill_vacancy ON \"VacancySkill\"(vacancy_id)'),
         lambda: db.execute_sql('CREATE INDEX IF NOT EXISTS idx_vacancy_skill_skill ON \"VacancySkill\"(skill_id)'),
+    ],
+
+    '003_set_salary_null': [
+        alter_salary_columns('salary_from'),
+        alter_salary_columns('salary_to'),
+        alter_salary_columns('average_salary'),
     ]
 }
 
