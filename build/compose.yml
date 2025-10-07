@@ -6,8 +6,10 @@ services:
       context: ..
       dockerfile: build/backend/Dockerfile
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file: .env.production
 
 
