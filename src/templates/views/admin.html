@@ -25,10 +25,10 @@
             <form action="{{ url_for('collect_vacancies') }}" id="collect-form" method="POST">
                 <label for="professions">Какие профессии ищем?</label>
                 <textarea id="professions" name="auto_collect_vacancies"
-                          placeholder="Введите профессии через запятую"></textarea>
+                          placeholder="Введите профессии через запятую" required></textarea>
 
                 <label for="timer">Таймер (в минутах)</label>
-                <input type="number" id="timer" name="timer1" placeholder="Введите время в минутах">
+                <input type="number" id="timer" name="timer1" placeholder="Введите время в минутах" required>
 
                 <!-- Кнопка для запуска -->
                 <button class="button is-light" type="submit" onclick="setFormAction('start')">Запустить</button>

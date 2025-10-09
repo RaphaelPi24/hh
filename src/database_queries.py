@@ -52,6 +52,8 @@ class Model:
         return data
 
     def get_cards_by_skill(self) -> List[Dict]:
+        search_condition = Skill.name.contains(self.form.full_search_query)
+
         data = (
             VacancyCard
             .select(
@@ -65,7 +67,10 @@ class Model:
                 VacancyCard.schedule,
                 VacancyCard.url
             )
-            .where(VacancyCard.skills.contains(self.form.full_search_query))
+            .join(VacancySkill)
+            .join(Skill)
+            .where(search_condition)
+            .distinct()
             .dicts()
         )
         return data
