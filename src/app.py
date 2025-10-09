@@ -78,7 +78,7 @@ def collect_vacancies():
     if form.errors:
         return render_template('views/admin.html', error_autocollection=form.errors)
 
-    scheduler.start(valid_timer, process_profession_data, 'autocollection', valid_professions)
+    scheduler.start(valid_timer, parsers.tasks.process_profession_data, 'autocollection', valid_professions)
     cache_session.schedule_run['autocollecion'] = True
     return redirect(url_for('get_admin'))
 
