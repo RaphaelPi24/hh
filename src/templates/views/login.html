@@ -1,23 +1,47 @@
 {% extends 'base_headers.html' %}
 {% block content %}
-    <h1>Вход</h1>
-    <form method="POST" action="{{ url_for('auth.login_post') }}">
-        <label>Имя пользователя</label>
-        <input type="text" name="name" required>
-        <br>
-        <label>Пароль</label>
-        <input type="password" name="password" required>
-        <br>
-        <button type="submit">Войти</button>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <ul class=flashes>
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-    </form>
-    <p>Нет аккаунта? <a href="{{ url_for('auth.register_get') }}">Зарегистрируйтесь</a></p>
+    <div class="container" style="max-width: 900px; margin-top: 50px;">
+
+        <div class="form-container" style="min-width: 300px; flex-grow: 1;">
+            <h1>Вход</h1>
+            <form method="POST" action="{{ url_for('auth.login_post') }}">
+                <label>Имя пользователя</label>
+                <input type="text" name="name" required>
+                <br>
+                <label>Пароль</label>
+                <input type="password" name="password" required>
+                <br>
+                <button type="submit" class="button is-light" style="width: 100%;">Войти</button>
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <ul class=flashes style="color: red; list-style-type: none; padding: 0;">
+                            {% for message in messages %}
+                                <li style="margin-top: 10px; font-weight: bold;">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+            </form>
+            <p style="margin-top: 20px;">Нет аккаунта? <a href="{{ url_for('auth.register_get') }}">Зарегистрируйтесь</a></p>
+        </div>
+
+        <div class="form-container" style="background-color: #e0e0e0; min-width: 300px; flex-grow: 2;">
+            <h2 style="font-size: 1.5rem; color: #333; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-top: 0;">
+                ⭐ HH Job Analyzer: Проект для Портфолио
+            </h2>
+            <p style="font-size: 1rem; line-height: 1.6;">
+                **HH Job Analyzer** — это полноценное решение для сбора, хранения и глубокого анализа данных о вакансиях с HeadHunter. Проект демонстрирует навыки работы с многокомпонентной архитектурой, асинхронными задачами и аналитикой больших данных.
+            </p>
+
+            <h3 style="font-size: 1.1rem; color: #555; margin-top: 20px;">Ключевой стек и особенности:</h3>
+            <ul style="list-style-type: '👉 '; padding-left: 20px;">
+                <li style="margin-bottom: 8px;">**Backend:** Python/Flask (MVC-подобная структура).</li>
+                <li style="margin-bottom: 8px;">**База данных:** PostgreSQL с ORM (Peewee/SQLAlchemy).</li>
+                <li style="margin-bottom: 8px;">**Архитектура:** Docker Compose (Flask, DB, Worker, Redis) для быстрого развертывания.</li>
+                <li style="margin-bottom: 8px;">**Автоматизация:** **APScheduler** для регулярного сбора данных и **RQ/Redis** для обработки фоновых задач.</li>
+                <li style="margin-bottom: 8px;">**Аналитика:** Визуализация популярных навыков, сравнение навыков со средней зарплатой.</li>
+                <li style="margin-bottom: 8px;">**Оптимизация:** Кэширование запросов и графиков в Redis для высокой производительности.</li>
+            </ul>
+        </div>
+    </div>
 {% endblock %}
